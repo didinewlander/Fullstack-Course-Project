@@ -1,27 +1,66 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const ProductSchema = new mongoose.Schema({
+const ProductSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 150,
     },
-    description: {
-        type: String
-    },
-    imageURL: { // URL for the image uploaded via Multer
-        type: String,
-        default: null
-    },
-    status: {
-        type: String,
-        enum: ['חשוף', 'מוסתר'], // Public or Hidden
-        default: 'מוסתר'
-    },
-    supplierId: { // Optional: Link to the Supplier User
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        default: null
-    }
-});
 
-module.exports = mongoose.model('Product', ProductSchema);
+    description: {
+      type: String,
+      trim: true,
+      maxlength: 2000,
+      default: "",
+    },
+
+    sku: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true,
+    },
+
+    imageUrl: {
+      type: String,
+      default: null,
+    },
+
+    visibility: {
+      type: String,
+      enum: ["Public", "Hidden"],
+      default: "Hidden",
+    },
+
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
+
+ProductSchema.index(
+  {
+    supplierId: 1,
+    sku: 1,
+  },
+  {
+    unique: true,
+  },
+);
+
+module.exports = mongoose.model("Product", ProductSchema);

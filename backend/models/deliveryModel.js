@@ -1,55 +1,166 @@
 const mongoose = require("mongoose");
 
-const DeliveryStatusEnum = {
-  PENDING: "ממתין",
-  IN_PROGRESS: "בתהליך",
-  TRANSIT: "במעבר",
-  COMING_SOON: "מגיע בקרוב",
-  ARRIVED_AT_WAREHOUSE: "הגיע למחסן",
-  WORKING: "עובד",
-};
+const {
+  DELIVERY_STATUSES,
+  DELIVERY_STATUS_VALUES,
+  ADDITIONAL_COST_STATUSES,
+  ADDITIONAL_COST_STATUS_VALUES,
+} = require("../utils/deliveryUtils");
 
-const DeliverySchema = new mongoose.Schema({
-  orderId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Order",
-    required: true,
+const DeliverySchema = new mongoose.Schema(
+  {
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
+      required: true,
+      unique: true,
+      index: true,
+    },
+
+    /*
+     * Copied from the order for efficient ownership
+     * checks and user-specific delivery queries.
+     */
+    orderedByUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
+    supplierId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
+    trackingNumber: {
+      type: String,
+      required: true,
+      trim: true,
+      uppercase: true,
+    },
+
+    status: {
+      type: String,
+      enum: DELIVERY_STATUS_VALUES,
+      default: DELIVERY_STATUSES.PENDING,
+      required: true,
+      index: true,
+    },
+
+    locationUpdate: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
+    },
+
+    deliveryStatusNotes: {
+      type: String,
+      trim: true,
+      maxlength: 2000,
+      default: "",
+    },
+
+    estimatedArrivalAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    arrivedAtWarehouseAt: {
+      type: Date,
+      default: null,
+    },
+
+    warehouseProcessingStartedAt: {
+      type: Date,
+      default: null,
+    },
+
+    warehouseCompletedAt: {
+      type: Date,
+      default: null,
+    },
+
+    additionalShippingCosts: {
+      type: Number,
+      min: 0,
+      default: 0,
+    },
+
+    additionalCostStatus: {
+      type: String,
+      enum: ADDITIONAL_COST_STATUS_VALUES,
+      default: ADDITIONAL_COST_STATUSES.NONE,
+      required: true,
+    },
+
+    additionalCostReason: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+      default: "",
+    },
+
+    additionalCostRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    additionalCostRequestedAt: {
+      type: Date,
+      default: null,
+    },
+
+    additionalCostReviewedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+
+    additionalCostReviewedAt: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
+
+/*
+ * The same supplier cannot reuse a tracking number.
+ * Different suppliers may use the same carrier number.
+ */
+DeliverySchema.index(
+  {
+    supplierId: 1,
+    trackingNumber: 1,
+  },
+  {
     unique: true,
   },
-  supplierId: {
-    // Who reported the delivery
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  trackingNumber: {
-    type: String,
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: Object.values(DeliveryStatusEnum),
-    default: DeliveryStatusEnum.PENDING,
-  },
-  locationUpdate: {
-    // Textual status/location update from the supplier
-    type: String,
-    default: "",
-  },
-  additionalShippingCosts: {
-    type: Number,
-    default: 0,
-    required: false,
-  },
-  requiresManagerApproval: {
-    // True if additional cost requires manager sign-off
-    type: Boolean,
-    default: false,
-  },
-  deliveryStatusNotes: {
-    type: String,
-    default: "",
-  },
+);
+
+DeliverySchema.index({
+  supplierId: 1,
+  status: 1,
+  createdAt: -1,
+});
+
+DeliverySchema.index({
+  orderedByUserId: 1,
+  createdAt: -1,
+});
+
+DeliverySchema.index({
+  status: 1,
+  estimatedArrivalAt: 1,
 });
 
 module.exports = mongoose.model("Delivery", DeliverySchema);

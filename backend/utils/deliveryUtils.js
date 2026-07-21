@@ -1,0 +1,85 @@
+//@ts-nocheck
+const DELIVERY_STATUSES = Object.freeze({
+  PENDING: "Pending",
+  IN_PROGRESS: "In Progress",
+  IN_TRANSIT: "In Transit",
+  ARRIVING_SOON: "Arriving Soon",
+  ARRIVED_AT_WAREHOUSE: "Arrived At Warehouse",
+  WAREHOUSE_PROCESSING: "Warehouse Processing",
+  WAREHOUSE_COMPLETED: "Warehouse Completed",
+});
+
+const DELIVERY_STATUS_VALUES = Object.freeze(
+  Object.values(DELIVERY_STATUSES),
+);
+
+const DELIVERY_STATUS_TRANSITIONS = Object.freeze({
+  [DELIVERY_STATUSES.PENDING]: [
+    DELIVERY_STATUSES.IN_PROGRESS,
+  ],
+
+  [DELIVERY_STATUSES.IN_PROGRESS]: [
+    DELIVERY_STATUSES.IN_TRANSIT,
+  ],
+
+  [DELIVERY_STATUSES.IN_TRANSIT]: [
+    DELIVERY_STATUSES.ARRIVING_SOON,
+    DELIVERY_STATUSES.ARRIVED_AT_WAREHOUSE,
+  ],
+
+  [DELIVERY_STATUSES.ARRIVING_SOON]: [
+    DELIVERY_STATUSES.ARRIVED_AT_WAREHOUSE,
+  ],
+
+  [DELIVERY_STATUSES.ARRIVED_AT_WAREHOUSE]: [
+    DELIVERY_STATUSES.WAREHOUSE_PROCESSING,
+  ],
+
+  [DELIVERY_STATUSES.WAREHOUSE_PROCESSING]: [
+    DELIVERY_STATUSES.WAREHOUSE_COMPLETED,
+  ],
+
+  [DELIVERY_STATUSES.WAREHOUSE_COMPLETED]: [],
+});
+
+const ADDITIONAL_COST_STATUSES = Object.freeze({
+  NONE: "None",
+  PENDING_APPROVAL: "Pending Approval",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+});
+
+const ADDITIONAL_COST_STATUS_VALUES = Object.freeze(
+  Object.values(ADDITIONAL_COST_STATUSES),
+);
+
+const DELIVERY_STATUS_LABELS = Object.freeze({
+  [DELIVERY_STATUSES.PENDING]: "ממתין",
+  [DELIVERY_STATUSES.IN_PROGRESS]: "בתהליך",
+  [DELIVERY_STATUSES.IN_TRANSIT]: "במעבר",
+  [DELIVERY_STATUSES.ARRIVING_SOON]: "מגיע בקרוב",
+  [DELIVERY_STATUSES.ARRIVED_AT_WAREHOUSE]: "הגיע למחסן",
+  [DELIVERY_STATUSES.WAREHOUSE_PROCESSING]: "בטיפול במחסן",
+  [DELIVERY_STATUSES.WAREHOUSE_COMPLETED]: "הטיפול במחסן הושלם",
+});
+
+const canTransitionDeliveryStatus = (
+  currentStatus,
+  nextStatus,
+) => {
+  return (
+    DELIVERY_STATUS_TRANSITIONS[
+      currentStatus
+    ]?.includes(nextStatus) ?? false
+  );
+};
+
+module.exports = {
+  DELIVERY_STATUSES,
+  DELIVERY_STATUS_VALUES,
+  DELIVERY_STATUS_TRANSITIONS,
+  DELIVERY_STATUS_LABELS,
+  ADDITIONAL_COST_STATUSES,
+  ADDITIONAL_COST_STATUS_VALUES,
+  canTransitionDeliveryStatus,
+};
