@@ -1,22 +1,19 @@
 const express = require("express");
 
 const {
+  getOrders,
+  getPendingOrders,
   createOrder,
-  getOrderById,
-  getMyOrders,
-  getAllOrders,
   approveOrder,
+  approveBulk,
   cancelOrder,
-} = require(
-  "../controllers/orderController",
-);
+} = require("../controllers/orderController");
 
 const {
   authenticate,
   authorizeRoles,
-} = require(
-  "../middleware/authMiddleware",
-);
+} = require("../middleware/authMiddleware");
+
 const { USER_ROLES } = require("../utils/usersUtils");
 
 const router = express.Router();
@@ -26,56 +23,57 @@ const router = express.Router();
  */
 router.use(authenticate);
 
+/*
+ * GET /api/v1/orders
+ */
+router.get(
+  "/",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  getOrders,
+);
+
+/*
+ * GET /api/v1/orders/pending
+ */
+router.get(
+  "/pending",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  getPendingOrders,
+);
+
+/*
+ * POST /api/v1/orders
+ */
 router.post(
   "/",
-  authorizeRoles(
-    USER_ROLES.VENDOR,
-    USER_ROLES.LOGISTICS_MANAGER,
-  ),
+  authorizeRoles(USER_ROLES.VENDOR),
   createOrder,
 );
 
 /*
- * Must appear before /:orderId.
+ * PATCH /api/v1/orders/:id/approve
  */
-router.get(
-  "/mine",
-  authorizeRoles(
-    USER_ROLES.VENDOR,
-    USER_ROLES.SUPPLIER,
-  ),
-  getMyOrders,
-);
-
-router.get(
-  "/admin",
-  authorizeRoles(
-    USER_ROLES.LOGISTICS_MANAGER,
-  ),
-  getAllOrders,
-);
-
-router.get(
-  "/:orderId",
-  getOrderById,
-);
-
-router.post(
-  "/:orderId/approve",
-  authorizeRoles(
-    USER_ROLES.SUPPLIER,
-    USER_ROLES.LOGISTICS_MANAGER,
-  ),
+router.patch(
+  "/:id/approve",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
   approveOrder,
 );
 
-router.post(
-  "/:orderId/cancel",
-  authorizeRoles(
-    USER_ROLES.VENDOR,
-    USER_ROLES.SUPPLIER,
-    USER_ROLES.LOGISTICS_MANAGER,
-  ),
+/*
+ * PATCH /api/v1/orders/approve-bulk
+ */
+router.patch(
+  "/approve-bulk",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  approveBulk,
+);
+
+/*
+ * PATCH /api/v1/orders/:id/cancel
+ */
+router.patch(
+  "/:id/cancel",
+  authorizeRoles(USER_ROLES.VENDOR),
   cancelOrder,
 );
 

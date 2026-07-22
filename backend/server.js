@@ -28,7 +28,7 @@ app.use(cookieParser());
 app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
 app.use("/api/auth", authRouter);
-app.use("/api/orders", orderRoutes);
+app.use("/api/v1/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/notification-rules", notificationRuleRoutes);
 app.use("/api/invoices", invoiceRoutes);
