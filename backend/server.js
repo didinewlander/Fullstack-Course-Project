@@ -27,7 +27,7 @@ app.use(cookieParser());
 // @ts-ignore
 app.use("/api/users", userRouter);
 app.use("/api/products", productRouter);
-app.use("/api/auth", authRouter);
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/notification-rules", notificationRuleRoutes);

@@ -16,7 +16,7 @@ const getRefreshCookieOptions = () => {
 
     sameSite: "lax",
 
-    path: "/api/auth",
+    path: "/api/v1/auth",
 
     maxAge: days * 24 * 60 * 60 * 1000,
   };
@@ -37,8 +37,10 @@ const clearRefreshTokenCookie = (res) => {
 };
 
 const register = asyncHandler(async (req, res) => {
+  const username = req.body.username ?? req.body.name;
+
   const result = await authService.register({
-    username: req.body.username,
+    username,
     email: req.body.email,
     password: req.body.password,
     userAgent: req.get("user-agent"),
