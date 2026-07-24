@@ -82,3 +82,28 @@
 - העלאת קבצים (תמונות מוצרים, חשבוניות) מנוהלת עם Multer
 - חובות וזיכויים מנוהלים פנימית במערכת ללא ממשק תשלומים חיצוני
 - חישובי מלאי מינימלי מבוססים על נוסחאות EOQ
+
+---
+
+## Products & Inventory API (v1)
+
+### Products
+- `GET /api/v1/products`
+- `GET /api/v1/products/pending`
+- `GET /api/v1/products/mine`
+- `GET /api/v1/products/admin`
+- `POST /api/v1/products/create` (כולל העלאת תמונה תחת השדה `image`)
+- `PATCH /api/v1/products/:id/approve`
+- `PATCH /api/v1/products/:id/reject`
+- `PATCH /api/v1/products/:id/visibility`
+
+### Inventory
+- `GET /api/v1/inventory/mine`
+- `GET /api/v1/inventory/admin`
+- `GET /api/v1/inventory/:productId`
+- `GET /api/v1/inventory/count`
+- `GET /api/v1/inventory/count/:invnetoryId`
+- `POST /api/v1/inventory/:productId`
+- `PATCH /api/v1/inventory/:inventoryId/restock`
+- `PATCH /api/v1/inventory/:inventoryId/minimum-stock`
+- `PATCH /api/v1/inventory/:inventoryId/adjust`
