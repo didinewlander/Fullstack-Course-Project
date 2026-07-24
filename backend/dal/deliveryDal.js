@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const Delivery = require("../models/deliveryModel");
 
 const createDelivery = async ({ deliveryData, session }) => {
@@ -110,6 +110,37 @@ const updateDeliveryById = async ({
   return query.lean();
 };
 
+const addExtraCost = async ({ deliveryId, cost, session }) => {
+  const query = Delivery.findByIdAndUpdate(
+    deliveryId,
+    { $push: { extraCosts: cost } },
+    { new: true, runValidators: true },
+  );
+  if (session) query.session(session);
+  return query.lean();
+};
+
+const reviewExtraCost = async ({ deliveryId, costId, approved, reviewedBy, session }) => {
+  const query = Delivery.findOneAndUpdate(
+    {
+      _id: deliveryId,
+      extraCosts: {
+        $elemMatch: { _id: costId, status: "Pending Approval" },
+      },
+    },
+    {
+      $set: {
+        "extraCosts.$.status": approved ? "Approved" : "Rejected",
+        "extraCosts.$.reviewedBy": reviewedBy,
+        "extraCosts.$.reviewedAt": new Date(),
+      },
+    },
+    { new: true, runValidators: true },
+  );
+  if (session) query.session(session);
+  return query.lean();
+};
+
 const findDeliveriesArrivingBetween = async ({ from, to }) => {
   return Delivery.find({
     estimatedArrivalAt: {
@@ -120,6 +151,8 @@ const findDeliveriesArrivingBetween = async ({ from, to }) => {
     status: {
       $in: ["In Transit", "Arriving Soon"],
     },
+
+    arrivalNotificationSentAt: null,
   }).lean();
 };
 
@@ -132,5 +165,7 @@ module.exports = {
   findDeliveries,
   countDeliveries,
   updateDeliveryById,
+  addExtraCost,
+  reviewExtraCost,
   findDeliveriesArrivingBetween,
 };

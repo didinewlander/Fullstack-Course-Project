@@ -26,6 +26,13 @@ const InvoiceSchema = new mongoose.Schema(
       index: true,
     },
 
+    vendorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+
     supplierId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -51,6 +58,17 @@ const InvoiceSchema = new mongoose.Schema(
       min: 0,
     },
 
+    totalAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    items: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
+
     status: {
       type: String,
       enum: INVOICE_STATUS_VALUES,
@@ -64,6 +82,11 @@ const InvoiceSchema = new mongoose.Schema(
      * This value should not be accepted from req.body.
      */
     storagePath: {
+      type: String,
+      default: null,
+    },
+
+    fileUrl: {
       type: String,
       default: null,
     },

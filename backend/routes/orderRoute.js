@@ -1,4 +1,5 @@
 const express = require("express");
+const { rateLimit } = require("express-rate-limit");
 
 const {
   createOrder,
@@ -18,8 +19,26 @@ const {
   "../middleware/authMiddleware",
 );
 const { USER_ROLES } = require("../utils/usersUtils");
+const AppError = require("../utils/AppError");
 
 const router = express.Router();
+
+const orderSubmissionLimiter = rateLimit({
+  windowMs: 10 * 1000,
+  limit: 1,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => req.auth.userId,
+  handler: (req, res, next) => {
+    next(
+      new AppError(
+        "Please wait before submitting another order request",
+        429,
+        "ORDER_REQUEST_RATE_LIMITED",
+      ),
+    );
+  },
+});
 
 /*
  * Every order route requires authentication.
@@ -32,6 +51,7 @@ router.post(
     USER_ROLES.VENDOR,
     USER_ROLES.LOGISTICS_MANAGER,
   ),
+  orderSubmissionLimiter,
   createOrder,
 );
 
@@ -66,6 +86,7 @@ router.post(
     USER_ROLES.SUPPLIER,
     USER_ROLES.LOGISTICS_MANAGER,
   ),
+  orderSubmissionLimiter,
   approveOrder,
 );
 

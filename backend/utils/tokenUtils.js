@@ -1,43 +1,41 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
-const getRequiredEnvironmentVariable = (
-  /** @type {string} */ name,
-) => {
+const TOKEN_TYPES = {
+  ACCESS: "access",
+  REFRESH: "refresh",
+};
+const TOKEN_TYPE_VALUES = Object.values(TOKEN_TYPES);
+const TOKEN_SIDES = {
+  CLIENT: "logistics-client",
+  API: "logistics-api",
+};
+const TOKEN_SIDE_VALUES = Object.values(TOKEN_SIDES);
+const getRequiredEnvironmentVariable = (/** @type {string} */ name) => {
   const value = process.env[name];
 
   if (!value) {
-    throw new Error(
-      `Missing required environment variable: ${name}`,
-    );
+    throw new Error(`Missing required environment variable: ${name}`);
   }
 
   return value;
 };
 
 const getAccessTokenMinutes = () => {
-  const value = Number(
-    process.env.ACCESS_TOKEN_MINUTES ?? 15,
-  );
+  const value = Number(process.env.ACCESS_TOKEN_MINUTES ?? 15);
 
   if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(
-      "ACCESS_TOKEN_MINUTES must be a positive integer",
-    );
+    throw new Error("ACCESS_TOKEN_MINUTES must be a positive integer");
   }
 
   return value;
 };
 
 const getRefreshTokenDays = () => {
-  const value = Number(
-    process.env.REFRESH_TOKEN_DAYS ?? 7,
-  );
+  const value = Number(process.env.REFRESH_TOKEN_DAYS ?? 7);
 
   if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(
-      "REFRESH_TOKEN_DAYS must be a positive integer",
-    );
+    throw new Error("REFRESH_TOKEN_DAYS must be a positive integer");
   }
 
   return value;
@@ -45,23 +43,18 @@ const getRefreshTokenDays = () => {
 
 const getCommonJwtOptions = () => {
   return /** @type {import("jsonwebtoken").SignOptions} */ ({
-    issuer:
-      process.env.JWT_ISSUER ??
-      "logistics-api",
+    issuer: process.env.JWT_ISSUER ?? TOKEN_SIDES.API,
 
-    audience:
-      process.env.JWT_AUDIENCE ??
-      "logistics-client",
+    audience: process.env.JWT_AUDIENCE ?? TOKEN_SIDES.CLIENT,
 
     algorithm: "HS256",
   });
 };
 
-const createAccessToken = (/** @type {{ username: any; role: any; _id: { toString: () => any; }; }} */ user) => {
-  const secret =
-    getRequiredEnvironmentVariable(
-      "JWT_ACCESS_SECRET",
-    );
+const createAccessToken = (
+  /** @type {{ username: any; role: any; _id: { toString: () => any; }; }} */ user,
+) => {
+  const secret = getRequiredEnvironmentVariable("JWT_ACCESS_SECRET");
 
   const minutes = getAccessTokenMinutes();
 
@@ -81,14 +74,10 @@ const createAccessToken = (/** @type {{ username: any; role: any; _id: { toStrin
   );
 };
 
-const createRefreshToken = (/** @type {{ userId: string; sessionId: string; }} */ {
-  userId,
-  sessionId,
-}) => {
-  const secret =
-    getRequiredEnvironmentVariable(
-      "JWT_REFRESH_SECRET",
-    );
+const createRefreshToken = (
+  /** @type {{ userId: string; sessionId: string; }} */ { userId, sessionId },
+) => {
+  const secret = getRequiredEnvironmentVariable("JWT_REFRESH_SECRET");
 
   const days = getRefreshTokenDays();
 
@@ -106,10 +95,7 @@ const createRefreshToken = (/** @type {{ userId: string; sessionId: string; }} *
     },
   );
 
-  const expiresAt = new Date(
-    Date.now() +
-      days * 24 * 60 * 60 * 1000,
-  );
+  const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
   return {
     token,
@@ -118,26 +104,15 @@ const createRefreshToken = (/** @type {{ userId: string; sessionId: string; }} *
 };
 
 const verifyAccessToken = (/** @type {string} */ token) => {
-  const secret =
-    getRequiredEnvironmentVariable(
-      "JWT_ACCESS_SECRET",
-    );
+  const secret = getRequiredEnvironmentVariable("JWT_ACCESS_SECRET");
 
-  const payload = jwt.verify(
-    token,
-    secret,
-    {
-      issuer:
-        process.env.JWT_ISSUER ??
-        "logistics-api",
+  const payload = jwt.verify(token, secret, {
+    issuer: process.env.JWT_ISSUER ?? TOKEN_SIDES.API,
 
-      audience:
-        process.env.JWT_AUDIENCE ??
-        "logistics-client",
+    audience: process.env.JWT_AUDIENCE ?? TOKEN_SIDES.CLIENT,
 
-      algorithms: ["HS256"],
-    },
-  );
+    algorithms: ["HS256"],
+  });
 
   if (
     typeof payload !== "object" ||
@@ -151,26 +126,15 @@ const verifyAccessToken = (/** @type {string} */ token) => {
 };
 
 const verifyRefreshToken = (/** @type {string} */ token) => {
-  const secret =
-    getRequiredEnvironmentVariable(
-      "JWT_REFRESH_SECRET",
-    );
+  const secret = getRequiredEnvironmentVariable("JWT_REFRESH_SECRET");
 
-  const payload = jwt.verify(
-    token,
-    secret,
-    {
-      issuer:
-        process.env.JWT_ISSUER ??
-        "logistics-api",
+  const payload = jwt.verify(token, secret, {
+    issuer: process.env.JWT_ISSUER ?? TOKEN_SIDES.API,
 
-      audience:
-        process.env.JWT_AUDIENCE ??
-        "logistics-client",
+    audience: process.env.JWT_AUDIENCE ?? TOKEN_SIDES.CLIENT,
 
-      algorithms: ["HS256"],
-    },
-  );
+    algorithms: ["HS256"],
+  });
 
   if (
     typeof payload !== "object" ||
@@ -185,10 +149,7 @@ const verifyRefreshToken = (/** @type {string} */ token) => {
 };
 
 const hashRefreshToken = (/** @type {string} */ token) => {
-  return crypto
-    .createHash("sha256")
-    .update(token)
-    .digest("hex");
+  return crypto.createHash("sha256").update(token).digest("hex");
 };
 
 const securelyCompareHashes = (

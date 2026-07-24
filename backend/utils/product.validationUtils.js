@@ -82,7 +82,12 @@ const validateUnitPrice = (/** @type {number} */ unitPrice) => {
 };
 
 const validateVisibility = (/** @type {string} */ visibility) => {
-  if (!PRODUCT_VISIBILITIES.includes(visibility)) {
+  const normalizedVisibility =
+    typeof visibility === "string"
+      ? { public: "Public", private: "Hidden" }[visibility.toLowerCase()] ?? visibility
+      : visibility;
+
+  if (!PRODUCT_VISIBILITIES.includes(normalizedVisibility)) {
     throw new AppError(
       "Product visibility must be Public or Hidden",
       400,
@@ -90,7 +95,7 @@ const validateVisibility = (/** @type {string} */ visibility) => {
     );
   }
 
-  return visibility;
+  return normalizedVisibility;
 };
 
 const validateImageUrl = (
@@ -102,6 +107,10 @@ const validateImageUrl = (
 
   if (typeof imageUrl !== "string") {
     throw new AppError("Image URL must be a string", 400, "INVALID_IMAGE_URL");
+  }
+
+  if (/^uploads\/products\/[a-zA-Z0-9-]+\.[a-zA-Z0-9]+$/.test(imageUrl)) {
+    return imageUrl;
   }
 
   try {
@@ -121,6 +130,19 @@ const validateImageUrl = (
   }
 };
 
+const validateExpiryDate = (expiryDate) => {
+  if (expiryDate === undefined || expiryDate === null || expiryDate === "") {
+    return null;
+  }
+
+  const date = new Date(expiryDate);
+  if (Number.isNaN(date.getTime())) {
+    throw new AppError("Expiry date must be a valid date", 400, "INVALID_EXPIRY_DATE");
+  }
+
+  return date;
+};
+
 
 module.exports = {
   validateObjectId,
@@ -130,4 +152,5 @@ module.exports = {
   validateUnitPrice,
   validateVisibility,
   validateImageUrl,
+  validateExpiryDate,
 };

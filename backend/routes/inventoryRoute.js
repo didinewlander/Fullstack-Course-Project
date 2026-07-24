@@ -5,11 +5,15 @@ const express = require("express");
 const {
   createInventoryForProduct,
   getInventoryById,
+  getInventoryByProductId,
+  getInventoryCount,
+  getInventoryItemCount,
   getMyInventory,
   getAllInventory,
   restockInventory,
   updateMinimumStockLevel,
   adjustCurrentStock,
+  calculateEoqMinimumStock,
 } = require("../controllers/inventoryController");
 
 const {
@@ -27,6 +31,12 @@ router.post(
   createInventoryForProduct,
 );
 
+router.post(
+  "/:productId",
+  authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
+  createInventoryForProduct,
+);
+
 /*
  * These static paths must appear before /:inventoryId.
  */
@@ -38,13 +48,27 @@ router.get(
   getAllInventory,
 );
 
+router.get("/count", authorizeRoles(USER_ROLES.LOGISTICS_MANAGER), getInventoryCount);
+
 router.get(
-  "/:inventoryId",
+  "/count/:inventoryId",
+  authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
+  getInventoryItemCount,
+);
+
+router.get(
+  "/by-id/:inventoryId",
   authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
   getInventoryById,
 );
 
-router.post(
+router.get(
+  "/:productId",
+  authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
+  getInventoryByProductId,
+);
+
+router.patch(
   "/:inventoryId/restock",
   authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
   restockInventory,
@@ -60,6 +84,12 @@ router.patch(
   "/:inventoryId/adjust",
   authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
   adjustCurrentStock,
+);
+
+router.patch(
+  "/:inventoryId/minimum-stock/eoq",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  calculateEoqMinimumStock,
 );
 
 module.exports = router;

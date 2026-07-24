@@ -31,7 +31,7 @@ const getMyNotifications = async (
       ? eventKey.trim().toUpperCase()
       : undefined;
 
-  const showUnreadOnly = unreadOnly === true;
+  const showUnreadOnly = unreadOnly === true || unreadOnly === "true";
 
   const [notifications, total] = await Promise.all([
     notificationDal.findNotificationsByUserId({

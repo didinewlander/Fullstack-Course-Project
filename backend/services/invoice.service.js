@@ -1,17 +1,24 @@
-//@ts-nocheck
+
 const AppError = require("../utils/AppError");
 const { INVOICE_STATUSES } = require("../utils/invoiceUtils");
+const {
+  DELIVERY_STATUSES,
+  ADDITIONAL_COST_STATUSES,
+} = require("../utils/deliveryUtils");
 const { NOTIFICATION_EVENTS } = require("../utils/notificationUtils");
 const { getPagination } = require("../utils/orderUtils");
 const { validateObjectId } = require("../utils/product.validationUtils");
 const { USER_ROLES } = require("../utils/usersUtils");
 const { ORDER_STATUSES } = require("../utils/orderUtils");
+const { roundMoney } = require("./orderPricing.service");
 const notificationService = require("./notification.service");
 
 const crypto = require("crypto");
 const mongoose = require("mongoose");
 
 const invoiceDal = require("../dal/invoiceDal");
+
+const deliveryDal = require("../dal/deliveryDal");
 
 const orderDal = require("../dal/orderDal");
 
@@ -78,7 +85,7 @@ const assertCanViewInvoice = (invoice, actor) => {
   }
 
   const isOwningVendor =
-    actor.role === USER_ROLES.SUPPLIER &&
+    actor.role === USER_ROLES.VENDOR &&
     invoice.orderedByUserId.toString() === actor.userId;
 
   const isOwningSupplier =
@@ -179,7 +186,10 @@ const createInvoiceForOrder = async ({ orderId, actor, session }) => {
    * amount is not known yet.
    */
   if (
-    delivery.additionalCostStatus === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL
+    delivery.additionalCostStatus === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL ||
+    delivery.extraCosts?.some(
+      (cost) => cost.status === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
+    )
   ) {
     throw new AppError(
       "The additional shipping cost must be reviewed before invoicing",
@@ -193,10 +203,13 @@ const createInvoiceForOrder = async ({ orderId, actor, session }) => {
    *
    * NONE and REJECTED contribute zero to the invoice.
    */
-  const approvedAdditionalCost =
-    delivery.additionalCostStatus === ADDITIONAL_COST_STATUSES.APPROVED
-      ? Number(delivery.additionalShippingCosts)
-      : 0;
+  const approvedAdditionalCost = (delivery.extraCosts ?? []).reduce(
+    (total, cost) =>
+      cost.status === ADDITIONAL_COST_STATUSES.APPROVED
+        ? total + Number(cost.amount)
+        : total,
+    0,
+  );
 
   if (!Number.isFinite(approvedAdditionalCost) || approvedAdditionalCost < 0) {
     throw new AppError(
@@ -216,7 +229,11 @@ const createInvoiceForOrder = async ({ orderId, actor, session }) => {
 
       orderedByUserId: order.orderedByUserId,
 
+      vendorId: order.orderedByUserId,
+
       supplierId: order.supplierId,
+
+      items: order.items,
 
       invoiceNumber: generateInvoiceNumber(),
 
@@ -225,6 +242,8 @@ const createInvoiceForOrder = async ({ orderId, actor, session }) => {
        * Never accept it from req.body.
        */
       amount: invoiceAmount,
+
+      totalAmount: invoiceAmount,
 
       status: INVOICE_STATUSES.DRAFT,
     },
@@ -269,7 +288,7 @@ const getMyInvoices = async (
 
   if (actor.role === USER_ROLES.SUPPLIER) {
     filter.supplierId = actor.userId;
-  } else if (actor.role === USER_ROLES.LOGISTICS_MANAGER) {
+  } else if (actor.role === USER_ROLES.VENDOR) {
     filter.orderedByUserId = actor.userId;
   } else {
     throw new AppError(
@@ -410,6 +429,7 @@ const attachInvoiceFile = async ({ invoiceId, file, actor }) => {
 
     updateData: {
       storagePath: file.storagePath,
+      fileUrl: file.storagePath,
       originalFileName: file.originalFileName,
       mimeType: file.mimeType,
       fileSize: file.fileSize,
@@ -539,7 +559,10 @@ const approveInvoice = async ({ invoiceId, actor }) => {
       await notificationService.createEventNotifications({
         eventKey: NOTIFICATION_EVENTS.INVOICE_READY,
 
-        recipientUserIds: [approvedInvoice.orderedByUserId.toString()],
+        recipientUserIds: [
+          approvedInvoice.orderedByUserId.toString(),
+          approvedInvoice.supplierId.toString(),
+        ],
 
         context: {
           invoiceId: approvedInvoice._id.toString(),

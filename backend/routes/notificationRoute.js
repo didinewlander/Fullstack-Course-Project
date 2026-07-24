@@ -8,6 +8,11 @@ const {
   markAllNotificationsAsRead,
   sendCustomNotification,
 } = require("../controllers/notificationController");
+const {
+  getRules,
+  createCustomRule,
+  updateRule,
+} = require("../controllers/notificationRuleController");
 
 const {
   authenticate,
@@ -21,6 +26,24 @@ router.use(authenticate);
 router.get("/", getMyNotifications);
 
 router.get("/unread-count", getUnreadCount);
+
+router.get(
+  "/settings",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  getRules,
+);
+
+router.post(
+  "/settings",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  createCustomRule,
+);
+
+router.patch(
+  "/settings/:ruleId",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  updateRule,
+);
 
 router.patch("/read-all", markAllNotificationsAsRead);
 

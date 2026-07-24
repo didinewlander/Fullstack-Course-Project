@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const asyncHandler = require("../utils/routerHandler");
 const notificationService = require("../services/notification.service");
 

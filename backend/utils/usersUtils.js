@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const AppError = require("../utils/AppError");
+
 const USER_ROLES = Object.freeze({
   LOGISTICS_MANAGER: "Logistics Manager",
   SUPPLIER: "Supplier",
