@@ -156,7 +156,7 @@ const createProduct = async (
   const unitPrice = validateUnitPrice(productInput.unitPrice);
 
   const visibility =
-    productInput.visibility === undefined
+    actor.role === USER_ROLES.SUPPLIER || productInput.visibility === undefined
       ? "Hidden"
       : validateVisibility(productInput.visibility);
 
@@ -558,24 +558,6 @@ const updateProductVisibility = async ({ productId, visibility, actor }) => {
   return product;
 };
 
-const deleteProduct = async (
-  /** @type {{ productId: string, actor: any }} */ { productId, actor },
-) => {
-  validateObjectId(productId, "product ID");
-
-  const product = await productDal.findProductById(productId);
-
-  if (!product) {
-    throw new AppError("Product not found", 404, "PRODUCT_NOT_FOUND");
-  }
-
-  assertCanManageProduct({ product, actor });
-
-  await productDal.deleteProductById({ productId });
-
-  return product;
-};
-
 module.exports = {
   createProduct,
   getPublicProducts,
@@ -585,5 +567,4 @@ module.exports = {
   updateProduct,
   setProductStatus,
   updateProductVisibility,
-  deleteProduct,
 };
