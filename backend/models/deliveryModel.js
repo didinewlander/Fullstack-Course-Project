@@ -70,6 +70,11 @@ const DeliverySchema = new mongoose.Schema(
       index: true,
     },
 
+    arrivalNotificationSentAt: {
+      type: Date,
+      default: null,
+    },
+
     arrivedAtWarehouseAt: {
       type: Date,
       default: null,
@@ -88,6 +93,32 @@ const DeliverySchema = new mongoose.Schema(
     additionalShippingCosts: {
       type: Number,
       min: 0,
+      default: 0,
+    },
+
+    extraCosts: {
+      type: [
+        {
+          amount: { type: Number, required: true, min: 0 },
+          reason: { type: String, required: true, trim: true, maxlength: 1000 },
+          status: {
+            type: String,
+            enum: ADDITIONAL_COST_STATUS_VALUES,
+            required: true,
+          },
+          requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+          requestedAt: { type: Date, required: true },
+          reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+          reviewedAt: { type: Date, default: null },
+        },
+      ],
+      default: [],
+    },
+
+    autoApprovalThreshold: {
+      type: Number,
+      min: 0,
+      required: true,
       default: 0,
     },
 

@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const { escapeRegex } = require("../utils/regexUtils");
 
 const User = require("../models/userModel");

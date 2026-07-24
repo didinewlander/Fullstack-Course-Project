@@ -154,6 +154,43 @@ const getInventoryById = async ({ inventoryId, actor }) => {
   return formatInventory(detailedInventory);
 };
 
+const getInventoryByProductId = async ({ productId, actor }) => {
+  validateObjectId(productId, "product ID");
+  const inventory = await inventoryDal.findInventoryByProductId(productId);
+
+  if (!inventory) {
+    throw new AppError("Inventory not found", 404, "INVENTORY_NOT_FOUND");
+  }
+
+  assertCanManageInventory(inventory, actor);
+  return formatInventory(inventory);
+};
+
+const getInventoryCount = async ({ actor }) => {
+  if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
+    throw new AppError("Only logistics managers can count all inventory", 403, "FORBIDDEN");
+  }
+
+  const inventories = await inventoryDal.findInventories({ filter: {}, limit: 1000 });
+  return {
+    inventoryRecords: inventories.length,
+    currentStock: inventories.reduce((total, inventory) => total + inventory.currentStock, 0),
+    reservedStock: inventories.reduce((total, inventory) => total + inventory.reservedStock, 0),
+    availableStock: inventories.reduce((total, inventory) => total + inventory.currentStock - inventory.reservedStock, 0),
+  };
+};
+
+const getInventoryItemCount = async ({ inventoryId, actor }) => {
+  const inventory = await getInventoryById({ inventoryId, actor });
+  return {
+    inventoryId: inventory._id,
+    productId: inventory.productId,
+    currentStock: inventory.currentStock,
+    reservedStock: inventory.reservedStock,
+    availableStock: inventory.availableStock,
+  };
+};
+
 const getMyInventory = async ({
   actor,
   page: pageInput,
@@ -357,6 +394,34 @@ const adjustCurrentStock = async ({ inventoryId, currentStock, actor }) => {
   return formatInventory(updatedInventory);
 };
 
+const calculateEoqMinimumStock = async ({
+  inventoryId,
+  annualDemand,
+  orderingCost,
+  holdingCost,
+  actor,
+}) => {
+  validateObjectId(inventoryId, "inventory ID");
+
+  if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
+    throw new AppError("Only logistics managers can calculate EOQ", 403, "FORBIDDEN");
+  }
+
+  const demand = Number(annualDemand);
+  const orderCost = Number(orderingCost);
+  const storageCost = Number(holdingCost);
+  if (![demand, orderCost, storageCost].every(Number.isFinite) || demand < 0 || orderCost < 0 || storageCost <= 0) {
+    throw new AppError("annualDemand and orderingCost must be non-negative, and holdingCost must be positive", 400, "INVALID_EOQ_INPUT");
+  }
+
+  const eoq = Math.ceil(Math.sqrt((2 * demand * orderCost) / storageCost));
+  const updatedInventory = await inventoryDal.setMinimumStockLevel({ inventoryId, minimumStockLevel: eoq });
+  if (!updatedInventory) {
+    throw new AppError("Inventory not found", 404, "INVENTORY_NOT_FOUND");
+  }
+  return { ...formatInventory(updatedInventory), eoq };
+};
+
 /*
  * Internal order operation.
  *
@@ -445,11 +510,15 @@ const commitOrderItems = async ({ items, session }) => {
 module.exports = {
   createInventoryForProduct,
   getInventoryById,
+  getInventoryByProductId,
+  getInventoryCount,
+  getInventoryItemCount,
   getMyInventory,
   getAllInventory,
   restockInventory,
   updateMinimumStockLevel,
   adjustCurrentStock,
+  calculateEoqMinimumStock,
 
   /*
    * Internal service methods.

@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 
 const notificationRuleService = require("../services/notificationRule.service");
 

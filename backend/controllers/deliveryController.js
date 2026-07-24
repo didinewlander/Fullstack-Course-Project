@@ -17,6 +17,24 @@ const createDeliveryForOrder = asyncHandler(async (req, res) => {
   });
 });
 
+const createDelivery = asyncHandler(async (req, res) => {
+  const delivery = await deliveryService.createDeliveryForOrder({
+    orderId: req.body.orderId,
+    deliveryInput: req.body,
+    actor: req.auth,
+  });
+
+  res.status(201).json({ success: true, data: delivery });
+});
+
+const getDeliveries = asyncHandler(async (req, res) => {
+  const result = req.auth.role === "Logistics Manager"
+    ? await deliveryService.getAllDeliveries({ actor: req.auth, ...req.query })
+    : await deliveryService.getMyDeliveries({ actor: req.auth, ...req.query });
+
+  res.status(200).json({ success: true, data: result.deliveries, pagination: result.pagination });
+});
+
 const getDeliveryById = asyncHandler(async (req, res) => {
   const delivery = await deliveryService.getDeliveryById({
     deliveryId: req.params.deliveryId,
@@ -104,9 +122,19 @@ const requestAdditionalShippingCost = asyncHandler(async (req, res) => {
   });
 });
 
+const updateDeliverySettings = asyncHandler(async (req, res) => {
+  const settings = await deliveryService.updateDeliverySettings({
+    autoApprovalThreshold: req.body.autoApprovalThreshold,
+    actor: req.auth,
+  });
+  res.status(200).json({ success: true, data: settings });
+});
+
 const approveAdditionalShippingCost = asyncHandler(async (req, res) => {
   const delivery = await deliveryService.reviewAdditionalShippingCost({
     deliveryId: req.params.deliveryId,
+
+    costId: req.params.costId,
 
     approved: true,
 
@@ -123,6 +151,8 @@ const rejectAdditionalShippingCost = asyncHandler(async (req, res) => {
   const delivery = await deliveryService.reviewAdditionalShippingCost({
     deliveryId: req.params.deliveryId,
 
+    costId: req.params.costId,
+
     approved: false,
 
     actor: req.auth,
@@ -136,6 +166,8 @@ const rejectAdditionalShippingCost = asyncHandler(async (req, res) => {
 
 module.exports = {
   createDeliveryForOrder,
+  createDelivery,
+  getDeliveries,
   getDeliveryById,
   getMyDeliveries,
   getAllDeliveries,
@@ -143,4 +175,5 @@ module.exports = {
   requestAdditionalShippingCost,
   approveAdditionalShippingCost,
   rejectAdditionalShippingCost,
+  updateDeliverySettings,
 };

@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const Inventory = require("../models/inventoryModel");
 
 const createInventory = async (inventoryData, session) => {

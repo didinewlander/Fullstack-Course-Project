@@ -12,6 +12,7 @@ const {
   authenticate,
   authorizeRoles,
 } = require("../middleware/authMiddleware");
+const { USER_ROLES } = require("../utils/usersUtils");
 
 const router = express.Router();
 
@@ -24,14 +25,14 @@ router.use(authenticate);
  * Only a Logistics Manager may create users with
  * Supplier or Logistics Manager roles.
  */
-router.post("/", authorizeRoles("LOGISTICS_MANAGER"), createUser);
+router.post("/", authorizeRoles(USER_ROLES.LOGISTICS_MANAGER), createUser);
 
-router.get("/", authorizeRoles("LOGISTICS_MANAGER"), getUsers);
+router.get("/", authorizeRoles(USER_ROLES.LOGISTICS_MANAGER), getUsers);
 
-router.get("/:userId", authorizeRoles("LOGISTICS_MANAGER"), getUserById);
+router.get("/:userId", authorizeRoles(USER_ROLES.LOGISTICS_MANAGER), getUserById);
 
-router.patch("/:userId", authorizeRoles("LOGISTICS_MANAGER"), updateUser);
+router.patch("/:userId", authorizeRoles(USER_ROLES.LOGISTICS_MANAGER), updateUser);
 
-router.delete("/:userId", authorizeRoles("LOGISTICS_MANAGER"), deleteUser);
+router.delete("/:userId", authorizeRoles(USER_ROLES.LOGISTICS_MANAGER), deleteUser);
 
 module.exports = router;

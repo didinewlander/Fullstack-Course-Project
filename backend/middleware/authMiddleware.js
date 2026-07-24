@@ -1,6 +1,6 @@
 const AppError = require("../utils/AppError");
 const { verifyAccessToken } = require("../utils/tokenUtils");
-//@ts-ignore
+
 const authenticate = (req, res, next) => {
   const authorizationHeader = req.get("authorization");
 
@@ -49,7 +49,7 @@ const authenticate = (req, res, next) => {
 };
 
 const authorizeRoles = (/** @type {string[]} */ ...allowedRoles) => {
-  //@ts-ignore
+  
   return (req, res, next) => {
     if (!req.auth) {
       return next(

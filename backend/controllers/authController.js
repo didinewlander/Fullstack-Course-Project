@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const authService = require("../services/auth.service");
 const userService = require("../services/user.service");
 const asyncHandler = require("../utils/routerHandler");
@@ -16,7 +16,7 @@ const getRefreshCookieOptions = () => {
 
     sameSite: "lax",
 
-    path: "/api/auth",
+    path: "/api/v1/auth",
 
     maxAge: days * 24 * 60 * 60 * 1000,
   };

@@ -1,6 +1,6 @@
 const Notification = require("../models/notificationModel");
 
-//@ts-ignore
+
 const createNotification = async (notificationData, session) => {
   if (session) {
     const notification = await Notification.create(notificationData, {
@@ -12,7 +12,7 @@ const createNotification = async (notificationData, session) => {
 
   return Notification.create(notificationData);
 };
-//@ts-ignore
+
 const createManyNotifications = async (notificationsData, session) => {
   return Notification.insertMany(notificationsData, session ? { session } : {});
 };
@@ -26,11 +26,7 @@ const findNotificationsByUserId = async (
     limit = 20,
   },
 ) => {
-  const filter = {
-    userId,
-    readAt: null,
-    eventKey: "",
-  };
+  const filter = { userId };
 
   if (unreadOnly) {
     filter.readAt = null;
@@ -56,11 +52,7 @@ const countNotificationsByUserId = async (
     eventKey,
   },
 ) => {
-  const filter = {
-    userId,
-    readAt: null,
-    eventKey: "",
-  };
+  const filter = { userId };
 
   if (unreadOnly) {
     filter.readAt = null;
@@ -109,6 +101,7 @@ const markNotificationAsRead = async (
     {
       $set: {
         readAt: new Date(),
+        isRead: true,
       },
     },
     {
@@ -128,6 +121,7 @@ const markAllNotificationsAsRead = async (
     {
       $set: {
         readAt: new Date(),
+        isRead: true,
       },
     },
   );
