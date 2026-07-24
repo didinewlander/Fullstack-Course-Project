@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/dashboards/Dashboard";
+import ProductCatalog from "./pages/dashboards/vendor/ProductCatalog";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -25,7 +26,7 @@ function App() {
         path="/dashboard/vendor"
         element={
           <ProtectedRoute>
-            <Dashboard title="Vendor Dashboard" />
+            <ProductCatalog />
           </ProtectedRoute>
         }
       />
