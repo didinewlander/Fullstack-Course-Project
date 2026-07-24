@@ -106,6 +106,22 @@ const buildOrderItems = ({ requestedItems, products, supplierId, actor }) => {
       );
     }
 
+    if (product.status !== "Approved") {
+      throw new AppError(
+        `Product ${product.name} has not been approved for ordering`,
+        400,
+        "PRODUCT_NOT_APPROVED",
+      );
+    }
+
+    if (product.expiryDate && product.expiryDate <= new Date()) {
+      throw new AppError(
+        `Product ${product.name} has expired and cannot be ordered`,
+        400,
+        "PRODUCT_EXPIRED",
+      );
+    }
+
     const lineTotal = roundMoney(product.unitPrice * quantity);
 
     return {

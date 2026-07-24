@@ -134,15 +134,6 @@ const updateProductVisibility = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: product });
 });
 
-const deleteProduct = asyncHandler(async (req, res) => {
-  await productService.deleteProduct({
-    productId: req.params.productId,
-    actor: req.auth,
-  });
-
-  res.status(204).send();
-});
-
 module.exports = {
   createProduct,
   getPublicProducts,
@@ -154,5 +145,4 @@ module.exports = {
   rejectProduct,
   updateProductVisibility,
   getPendingProducts,
-  deleteProduct,
 };

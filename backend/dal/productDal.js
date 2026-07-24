@@ -24,7 +24,12 @@ const findProductsByIds = async (/** @type {string[]} */ productIds) => {
 const findPublicProductById = async (/** @type {string} */ productId) => {
   return Product.findOne({
     _id: productId,
+    status: "Approved",
     visibility: "Public",
+    $or: [
+      { expiryDate: null },
+      { expiryDate: { $gt: new Date() } },
+    ],
   })
     .populate("supplierId", "username email role")
     .lean();
@@ -49,7 +54,12 @@ const findPublicProducts = async (
   },
 ) => {
   const filter = /** @type {any} */ ({
+    status: "Approved",
     visibility: "Public",
+    $or: [
+      { expiryDate: null },
+      { expiryDate: { $gt: new Date() } },
+    ],
     ...buildSearchFilter(search),
   });
 
@@ -74,7 +84,12 @@ const countPublicProducts = async (
   },
 ) => {
   const filter = /** @type {any} */ ({
+    status: "Approved",
     visibility: "Public",
+    $or: [
+      { expiryDate: null },
+      { expiryDate: { $gt: new Date() } },
+    ],
     ...buildSearchFilter(search),
   });
 
@@ -239,12 +254,6 @@ const updateProductById = async (
   ).lean();
 };
 
-const deleteProductById = async (
-  /** @type {{ productId: string }} */ { productId },
-) => {
-  return Product.findByIdAndDelete(productId).lean();
-};
-
 module.exports = {
   createProduct,
   findProductById,
@@ -260,5 +269,4 @@ module.exports = {
   findPendingProducts,
   countPendingProducts,
   updateProductById,
-  deleteProductById,
 };
