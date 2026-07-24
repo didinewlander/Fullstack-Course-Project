@@ -1,7 +1,7 @@
-// @ts-nocheck
 const AppError = require("../utils/AppError");
 
 const errorHandler = (error, req, res, next) => {
+  
   if (error instanceof AppError) {
     return res.status(error.statusCode).json({
       success: false,

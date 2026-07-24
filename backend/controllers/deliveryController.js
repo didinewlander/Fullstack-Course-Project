@@ -1,6 +1,7 @@
 const deliveryService = require("../services/delivery.service");
 
 const asyncHandler = require("../utils/routerHandler");
+const { USER_ROLES } = require("../utils/usersUtils");
 
 const createDeliveryForOrder = asyncHandler(async (req, res) => {
   const delivery = await deliveryService.createDeliveryForOrder({
@@ -28,11 +29,24 @@ const createDelivery = asyncHandler(async (req, res) => {
 });
 
 const getDeliveries = asyncHandler(async (req, res) => {
-  const result = req.auth.role === "Logistics Manager"
-    ? await deliveryService.getAllDeliveries({ actor: req.auth, ...req.query })
-    : await deliveryService.getMyDeliveries({ actor: req.auth, ...req.query });
+  const result =
+    req.auth.role === USER_ROLES.LOGISTICS_MANAGER
+      ? await deliveryService.getAllDeliveries({
+          actor: req.auth,
+          ...req.query,
+        })
+      : await deliveryService.getMyDeliveries({
+          actor: req.auth,
+          ...req.query,
+        });
 
-  res.status(200).json({ success: true, data: result.deliveries, pagination: result.pagination });
+  res
+    .status(200)
+    .json({
+      success: true,
+      data: result.deliveries,
+      pagination: result.pagination,
+    });
 });
 
 const getDeliveryById = asyncHandler(async (req, res) => {

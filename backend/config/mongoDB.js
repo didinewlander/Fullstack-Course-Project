@@ -10,7 +10,7 @@ const initDB = async () => {
     const conn = await mongoose.connect(MONGO_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    // @ts-ignore - this is to handle the error object which may not have a 'message' property in some cases
+    // this is to handle the error object which may not have a 'message' property in some cases
     console.error(`Error connecting to MongoDB: ${error.message}`);
     process.exit(1);
   }

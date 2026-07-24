@@ -84,7 +84,7 @@ const createCustomRule = async (
   const recipientRoles = validateRecipientRoles(ruleInput.recipientRoles ?? []);
 
   return notificationRuleDal.createRule({
-    // @ts-ignore
+    
     eventKey,
     displayName: String(ruleInput.displayName ?? "").trim(),
 

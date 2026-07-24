@@ -14,6 +14,7 @@ const deliveryRoutes = require("./routes/deliveryRoute");
 const reportRoutes = require("./routes/reportRoute");
 const { notifyDeliveriesArrivingSoon } = require("./services/delivery.service");
 const errorHandler = require("./middleware/errorHandler");
+const AppError = require("./utils/AppError");
 
 dotenv.config();
 
@@ -27,7 +28,6 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/uploads", express.static("uploads"));
 
-// @ts-ignore
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/auth", authRouter);
@@ -39,6 +39,16 @@ app.use("/api/v1/inventory", inventoryRoutes);
 app.use("/api/v1/deliveries", deliveryRoutes);
 app.use("/api/v1/reports", reportRoutes);
 
+app.use((req, res, next) => {
+  next(
+    new AppError(
+      `Route ${req.method} ${req.originalUrl} was not found`,
+      404,
+      "ROUTE_NOT_FOUND",
+    ),
+  );
+});
+
 app.use(errorHandler);
 
 app.listen(PORT, () => {
@@ -48,9 +58,12 @@ app.listen(PORT, () => {
     console.error("Failed to check upcoming deliveries:", error.message);
   });
 
-  setInterval(() => {
-    notifyDeliveriesArrivingSoon().catch((error) => {
-      console.error("Failed to check upcoming deliveries:", error.message);
-    });
-  }, 15 * 60 * 1000);
+  setInterval(
+    () => {
+      notifyDeliveriesArrivingSoon().catch((error) => {
+        console.error("Failed to check upcoming deliveries:", error.message);
+      });
+    },
+    15 * 60 * 1000,
+  );
 });

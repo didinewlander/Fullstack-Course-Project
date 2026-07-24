@@ -1,5 +1,6 @@
 const { validateObjectId } = require("./product.validationUtils");
 const userDal = require("../dal/userDal");
+const { USER_ROLES } = require("./usersUtils");
 const AppError = require("./AppError");
 
 const ORDER_STATUSES = Object.freeze({
@@ -58,7 +59,7 @@ const validateSupplier = async (/** @type {string} */ supplierId) => {
     throw new AppError("Supplier not found", 404, "SUPPLIER_NOT_FOUND");
   }
 
-  if (supplier.role !== "Supplier") {
+  if (supplier.role !== USER_ROLES.SUPPLIER) {
     throw new AppError(
       "The selected user is not a supplier",
       400,

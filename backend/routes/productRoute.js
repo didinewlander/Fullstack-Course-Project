@@ -11,6 +11,7 @@ const {
   approveProduct,
   rejectProduct,
   updateProductVisibility,
+  deleteProduct,
 } = require("../controllers/productController");
 
 const {
@@ -103,6 +104,13 @@ router.patch(
   authenticate,
   authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
   updateProduct,
+);
+
+router.delete(
+  "/:productId",
+  authenticate,
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  deleteProduct,
 );
 
 module.exports = router;

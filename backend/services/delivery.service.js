@@ -7,13 +7,9 @@ const deliverySettingsDal = require("../dal/deliverySettingsDal");
 const notificationRuleDal = require("../dal/notificationRuleDal");
 
 const orderDal = require("../dal/orderDal");
-
 const userDal = require("../dal/userDal");
-
 const inventoryService = require("./inventory.service");
-
 const notificationService = require("./notification.service");
-
 const { USER_ROLES } = require("../utils/usersUtils");
 
 const {
@@ -350,7 +346,8 @@ const createDeliveryForOrder = async ({ orderId, deliveryInput, actor }) => {
     ) ?? "";
 
   const settings = await deliverySettingsDal.getSettings();
-  const autoApprovalThreshold = settings.autoApprovalThreshold ?? order.calculatedTotal * 2;
+  const autoApprovalThreshold =
+    settings.autoApprovalThreshold ?? order.calculatedTotal * 2;
 
   const delivery = await deliveryDal.createDelivery({
     deliveryData: {
@@ -792,7 +789,11 @@ const requestAdditionalShippingCost = async ({
         reviewedAt: automaticallyApproved ? new Date() : null,
       };
 
-      updatedDelivery = await deliveryDal.addExtraCost({ deliveryId, cost, session });
+      updatedDelivery = await deliveryDal.addExtraCost({
+        deliveryId,
+        cost,
+        session,
+      });
 
       if (!updatedDelivery) {
         throw new AppError(
@@ -860,7 +861,13 @@ const reviewAdditionalShippingCost = async ({
     throw new AppError("Delivery not found", 404, "DELIVERY_NOT_FOUND");
   }
 
-  if (!delivery.extraCosts?.some((cost) => cost._id.toString() === costId && cost.status === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL)) {
+  if (
+    !delivery.extraCosts?.some(
+      (cost) =>
+        cost._id.toString() === costId &&
+        cost.status === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
+    )
+  ) {
     throw new AppError(
       "This delivery has no pending additional-cost request",
       409,
@@ -868,7 +875,12 @@ const reviewAdditionalShippingCost = async ({
     );
   }
 
-  const updatedDelivery = await deliveryDal.reviewExtraCost({ deliveryId, costId, approved, reviewedBy: actor.userId });
+  const updatedDelivery = await deliveryDal.reviewExtraCost({
+    deliveryId,
+    costId,
+    approved,
+    reviewedBy: actor.userId,
+  });
 
   if (!updatedDelivery) {
     throw new AppError(
@@ -883,13 +895,23 @@ const reviewAdditionalShippingCost = async ({
 
 const updateDeliverySettings = async ({ autoApprovalThreshold, actor }) => {
   if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
-    throw new AppError("Only logistics managers can update delivery settings", 403, "FORBIDDEN");
+    throw new AppError(
+      "Only logistics managers can update delivery settings",
+      403,
+      "FORBIDDEN",
+    );
   }
   const threshold = Number(autoApprovalThreshold);
   if (!Number.isFinite(threshold) || threshold < 0) {
-    throw new AppError("autoApprovalThreshold must be a non-negative number", 400, "INVALID_AUTO_APPROVAL_THRESHOLD");
+    throw new AppError(
+      "autoApprovalThreshold must be a non-negative number",
+      400,
+      "INVALID_AUTO_APPROVAL_THRESHOLD",
+    );
   }
-  return deliverySettingsDal.updateSettings({ autoApprovalThreshold: threshold });
+  return deliverySettingsDal.updateSettings({
+    autoApprovalThreshold: threshold,
+  });
 };
 
 module.exports = {
