@@ -3,6 +3,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/dashboards/Dashboard";
 import ProductCatalog from "./pages/dashboards/vendor/ProductCatalog";
+import NewOrder from "./pages/dashboards/vendor/NewOrder";
+import OrderList from "./pages/dashboards/vendor/OrderList";
+import ManagerOrders from "./pages/dashboards/manager/ManagerOrders";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./App.css";
 
@@ -18,7 +21,7 @@ function App() {
         path="/dashboard/manager"
         element={
           <ProtectedRoute>
-            <Dashboard title="Logistics Manager Dashboard" />
+            <ManagerOrders />
           </ProtectedRoute>
         }
       />
@@ -27,6 +30,22 @@ function App() {
         element={
           <ProtectedRoute>
             <ProductCatalog />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/vendor/new-order"
+        element={
+          <ProtectedRoute>
+            <NewOrder />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/vendor/orders"
+        element={
+          <ProtectedRoute>
+            <OrderList />
           </ProtectedRoute>
         }
       />

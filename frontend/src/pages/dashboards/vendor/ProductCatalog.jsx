@@ -1,6 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../context/useAuth";
+import VendorNav from "../../../components/VendorNav";
 import { setSearchText } from "../../../redux/productsSlice";
 import "./ProductCatalog.css";
 
@@ -10,8 +9,6 @@ import "./ProductCatalog.css";
 // it's fake/mock data for now, real data comes later once the backend
 // (issue #10) and the API layer (issue #9) are ready
 function ProductCatalog() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const products = useSelector((state) => state.products.items);
@@ -26,22 +23,9 @@ function ProductCatalog() {
     dispatch(setSearchText(event.target.value));
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
     <div className="catalog-page">
-      <div className="catalog-header">
-        <div>
-          <h1>Vendor Dashboard</h1>
-          <p>Welcome, {user?.name}!</p>
-        </div>
-        <button type="button" onClick={handleLogout}>
-          Logout
-        </button>
-      </div>
+      <VendorNav />
 
       <h2>Product Catalog</h2>
 

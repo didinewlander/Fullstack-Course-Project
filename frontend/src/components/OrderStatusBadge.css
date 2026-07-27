@@ -1,0 +1,37 @@
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge-pending {
+  background: #eee;
+  color: #555;
+}
+
+.status-badge-approved {
+  background: #e0ecff;
+  color: #2b5bd7;
+}
+
+.status-badge-transit {
+  background: #fff2d9;
+  color: #a86a00;
+}
+
+.status-badge-delivered {
+  background: #e2f7e6;
+  color: #1c8a3b;
+}
+
+.status-badge-billed {
+  background: #f1e4ff;
+  color: #7b2cbf;
+}
+
+.status-badge-cancelled {
+  background: #fde2e2;
+  color: #c62828;
+}

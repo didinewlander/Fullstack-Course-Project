@@ -1,9 +1,9 @@
 import { useAuth } from "../../context/useAuth";
 import { useNavigate } from "react-router-dom";
 
-// this is just a placeholder page for now
+// this is just a placeholder page for now (currently only used by supplier)
 // each role will get its real dashboard later, in a different issue
-// (see issues #7, #12, #17, #22, #27 on GitHub)
+// (see issues #7, #17, #22, #27 on GitHub)
 function Dashboard({ title }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
