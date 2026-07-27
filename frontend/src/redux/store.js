@@ -1,12 +1,14 @@
 import { configureStore } from "@reduxjs/toolkit";
 import productsReducer from "./productsSlice";
+import ordersReducer from "./ordersSlice";
 
 // this is the main Redux store for the whole app
-// right now it only has the products slice (issue #8)
-// more slices (orders, notifications, etc.) will be added here later
+// products (issue #8) and orders (issue #11/#12) live here
+// more slices (notifications, etc.) will be added here later
 const store = configureStore({
   reducer: {
     products: productsReducer,
+    orders: ordersReducer,
   },
 });
 

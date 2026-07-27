@@ -4,13 +4,6 @@
   padding: 2rem;
 }
 
-.catalog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
 .catalog-search {
   width: 100%;
   max-width: 320px;

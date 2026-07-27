@@ -1,0 +1,49 @@
+.new-order-page {
+  padding: 2rem;
+}
+
+.new-order-table {
+  width: 100%;
+  max-width: 640px;
+  border-collapse: collapse;
+  margin-bottom: 1.25rem;
+}
+
+.new-order-table th,
+.new-order-table td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.new-order-quantity-input {
+  width: 70px;
+  padding: 0.3rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.new-order-pickup-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-width: 200px;
+  margin-bottom: 1.25rem;
+  font-weight: 500;
+}
+
+.new-order-pickup-label input {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.new-order-preview {
+  max-width: 480px;
+  margin-bottom: 1.25rem;
+}
+
+.new-order-error {
+  color: #c62828;
+  margin-bottom: 1rem;
+}
