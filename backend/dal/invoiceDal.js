@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const Invoice = require("../models/invoiceModel");
 const createInvoice = async (invoiceData, session) => {
   if (session) {
@@ -88,7 +88,7 @@ const updateInvoiceById = async (
   }
 
   const query = Invoice.findOneAndUpdate(
-    //@ts-ignore
+    
     filter,
     { $set: updateData },
     {

@@ -20,7 +20,7 @@ const NOTIFICATION_ENTITY_TYPES = Object.freeze([
   "Inventory",
 ]);
 
-//@ts-ignore
+
 const formatNotification = (notification) => {
   return {
     ...notification,
@@ -28,7 +28,7 @@ const formatNotification = (notification) => {
     status: notification.readAt ? "Read" : "Unread",
   };
 };
-//@ts-ignore
+
 const renderTemplate = (template, context) => {
   return template.replace(/{{\s*([a-zA-Z0-9_]+)\s*}}/g, (/** @type {any} */ match, /** @type {string | number} */ key) => {
     const value = context[key];

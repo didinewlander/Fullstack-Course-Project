@@ -1,11 +1,14 @@
-//@ts-nocheck
+
 
 const asyncHandler = require("../utils/routerHandler");
 const productService = require("../services/product.service");
 
 const createProduct = asyncHandler(async (req, res) => {
   const product = await productService.createProduct({
-    productInput: req.body,
+    productInput: {
+      ...req.body,
+      imageUrl: req.file ? `uploads/products/${req.file.filename}` : req.body.imageUrl,
+    },
     actor: req.auth,
   });
 
@@ -21,6 +24,20 @@ const getPublicProducts = asyncHandler(async (req, res) => {
     limit: req.query.limit,
     search: req.query.search,
     supplierId: req.query.supplierId,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: result.products,
+    pagination: result.pagination,
+  });
+});
+const getPendingProducts = asyncHandler(async (req, res) => {
+  const result = await productService.getPendingProducts({
+    actor: req.auth,
+    page: req.query.page,
+    limit: req.query.limit,
+    search: req.query.search,
   });
 
   res.status(200).json({
@@ -87,13 +104,34 @@ const updateProduct = asyncHandler(async (req, res) => {
   });
 });
 
-const deleteProduct = asyncHandler(async (req, res) => {
-  await productService.deleteProduct({
+const approveProduct = asyncHandler(async (req, res) => {
+  const product = await productService.setProductStatus({
     productId: req.params.productId,
+    status: "Approved",
     actor: req.auth,
   });
 
-  res.status(204).send();
+  res.status(200).json({ success: true, data: product });
+});
+
+const rejectProduct = asyncHandler(async (req, res) => {
+  const product = await productService.setProductStatus({
+    productId: req.params.productId,
+    status: "Rejected",
+    actor: req.auth,
+  });
+
+  res.status(200).json({ success: true, data: product });
+});
+
+const updateProductVisibility = asyncHandler(async (req, res) => {
+  const product = await productService.updateProductVisibility({
+    productId: req.params.productId,
+    visibility: req.body.visibility,
+    actor: req.auth,
+  });
+
+  res.status(200).json({ success: true, data: product });
 });
 
 module.exports = {
@@ -103,5 +141,8 @@ module.exports = {
   getMyProducts,
   getAllProducts,
   updateProduct,
-  deleteProduct,
+  approveProduct,
+  rejectProduct,
+  updateProductVisibility,
+  getPendingProducts,
 };

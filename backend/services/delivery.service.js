@@ -3,15 +3,13 @@ const mongoose = require("mongoose");
 const AppError = require("../utils/AppError");
 
 const deliveryDal = require("../dal/deliveryDal");
+const deliverySettingsDal = require("../dal/deliverySettingsDal");
+const notificationRuleDal = require("../dal/notificationRuleDal");
 
 const orderDal = require("../dal/orderDal");
-
 const userDal = require("../dal/userDal");
-
 const inventoryService = require("./inventory.service");
-
 const notificationService = require("./notification.service");
-
 const { USER_ROLES } = require("../utils/usersUtils");
 
 const {
@@ -117,10 +115,16 @@ const formatDelivery = (delivery) => {
   return {
     ...result,
 
+    approvedExtraCosts: (result.extraCosts ?? [])
+      .filter((cost) => cost.status === ADDITIONAL_COST_STATUSES.APPROVED)
+      .reduce((total, cost) => total + Number(cost.amount), 0),
+
     statusLabel: DELIVERY_STATUS_LABELS[result.status] ?? result.status,
 
     requiresManagerApproval:
-      result.additionalCostStatus === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
+      result.extraCosts?.some(
+        (cost) => cost.status === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
+      ) ?? false,
   };
 };
 
@@ -212,6 +216,49 @@ const getManagerUserIds = async () => {
   return managers.map((manager) => manager._id);
 };
 
+const notifyDeliveriesArrivingSoon = async () => {
+  const rule = await notificationRuleDal.findRuleByEventKey({
+    eventKey: NOTIFICATION_EVENTS.DELIVERY_ARRIVING_SOON,
+  });
+
+  if (!rule?.enabled) return { notifiedCount: 0 };
+
+  const thresholdHours = Number(rule.parameters?.thresholdHours ?? 24);
+  if (!Number.isFinite(thresholdHours) || thresholdHours <= 0) {
+    throw new Error("DELIVERY_ARRIVING_SOON thresholdHours must be positive");
+  }
+
+  const now = new Date();
+  const deliveries = await deliveryDal.findDeliveriesArrivingBetween({
+    from: now,
+    to: new Date(now.getTime() + thresholdHours * 60 * 60 * 1000),
+  });
+  const managerUserIds = await getManagerUserIds();
+
+  if (!managerUserIds.length) return { notifiedCount: 0 };
+
+  for (const delivery of deliveries) {
+    await notificationService.createEventNotifications({
+      eventKey: NOTIFICATION_EVENTS.DELIVERY_ARRIVING_SOON,
+      recipientUserIds: managerUserIds,
+      context: {
+        deliveryId: delivery._id.toString(),
+        trackingNumber: delivery.trackingNumber,
+        thresholdHours,
+      },
+      relatedEntityType: "Delivery",
+      relatedEntityId: delivery._id.toString(),
+    });
+
+    await deliveryDal.updateDeliveryById({
+      deliveryId: delivery._id,
+      updateData: { arrivalNotificationSentAt: now },
+    });
+  }
+
+  return { notifiedCount: deliveries.length };
+};
+
 const createDeliveryForOrder = async ({ orderId, deliveryInput, actor }) => {
   validateObjectId(orderId, "order ID");
 
@@ -298,6 +345,10 @@ const createDeliveryForOrder = async ({ orderId, deliveryInput, actor }) => {
       2000,
     ) ?? "";
 
+  const settings = await deliverySettingsDal.getSettings();
+  const autoApprovalThreshold =
+    settings.autoApprovalThreshold ?? order.calculatedTotal * 2;
+
   const delivery = await deliveryDal.createDelivery({
     deliveryData: {
       orderId: order._id,
@@ -317,6 +368,8 @@ const createDeliveryForOrder = async ({ orderId, deliveryInput, actor }) => {
       additionalShippingCosts: 0,
 
       additionalCostStatus: ADDITIONAL_COST_STATUSES.NONE,
+      extraCosts: [],
+      autoApprovalThreshold,
     },
     session: null,
   });
@@ -692,19 +745,6 @@ const requestAdditionalShippingCost = async ({
     );
   }
 
-  if (
-    ![
-      ADDITIONAL_COST_STATUSES.NONE,
-      ADDITIONAL_COST_STATUSES.REJECTED,
-    ].includes(delivery.additionalCostStatus)
-  ) {
-    throw new AppError(
-      "This delivery already has an active additional-cost request",
-      409,
-      "ADDITIONAL_COST_REQUEST_EXISTS",
-    );
-  }
-
   const amount = Number(costInput.amount);
 
   if (!Number.isFinite(amount) || amount <= 0) {
@@ -729,35 +769,29 @@ const requestAdditionalShippingCost = async ({
     );
   }
 
-  const managerUserIds = await getManagerUserIds();
-
   const session = await mongoose.startSession();
 
   let updatedDelivery;
 
   try {
     await session.withTransaction(async () => {
-      updatedDelivery = await deliveryDal.updateDeliveryById({
+      const automaticallyApproved = amount <= delivery.autoApprovalThreshold;
+      const cost = {
+        _id: new mongoose.Types.ObjectId(),
+        amount,
+        reason,
+        status: automaticallyApproved
+          ? ADDITIONAL_COST_STATUSES.APPROVED
+          : ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
+        requestedBy: actor.userId,
+        requestedAt: new Date(),
+        reviewedBy: automaticallyApproved ? actor.userId : null,
+        reviewedAt: automaticallyApproved ? new Date() : null,
+      };
+
+      updatedDelivery = await deliveryDal.addExtraCost({
         deliveryId,
-
-        expectedAdditionalCostStatus: delivery.additionalCostStatus,
-
-        updateData: {
-          additionalShippingCosts: amount,
-
-          additionalCostReason: reason,
-
-          additionalCostStatus: ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
-
-          additionalCostRequestedBy: actor.userId,
-
-          additionalCostRequestedAt: new Date(),
-
-          additionalCostReviewedBy: null,
-
-          additionalCostReviewedAt: null,
-        },
-
+        cost,
         session,
       });
 
@@ -769,7 +803,8 @@ const requestAdditionalShippingCost = async ({
         );
       }
 
-      if (managerUserIds.length > 0) {
+      const managerUserIds = await getManagerUserIds();
+      if (!automaticallyApproved && managerUserIds.length > 0) {
         await notificationService.createEventNotifications({
           eventKey: NOTIFICATION_EVENTS.EXTRA_COST_PENDING_APPROVAL,
 
@@ -778,7 +813,7 @@ const requestAdditionalShippingCost = async ({
           context: {
             deliveryId: updatedDelivery._id.toString(),
 
-            amount: updatedDelivery.additionalShippingCosts,
+            amount,
 
             trackingNumber: updatedDelivery.trackingNumber,
           },
@@ -805,10 +840,12 @@ const requestAdditionalShippingCost = async ({
 
 const reviewAdditionalShippingCost = async ({
   deliveryId,
+  costId,
   approved,
   actor,
 }) => {
   validateObjectId(deliveryId, "delivery ID");
+  validateObjectId(costId, "additional cost ID");
 
   if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
     throw new AppError(
@@ -825,7 +862,11 @@ const reviewAdditionalShippingCost = async ({
   }
 
   if (
-    delivery.additionalCostStatus !== ADDITIONAL_COST_STATUSES.PENDING_APPROVAL
+    !delivery.extraCosts?.some(
+      (cost) =>
+        cost._id.toString() === costId &&
+        cost.status === ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
+    )
   ) {
     throw new AppError(
       "This delivery has no pending additional-cost request",
@@ -834,20 +875,11 @@ const reviewAdditionalShippingCost = async ({
     );
   }
 
-  const updatedDelivery = await deliveryDal.updateDeliveryById({
+  const updatedDelivery = await deliveryDal.reviewExtraCost({
     deliveryId,
-
-    expectedAdditionalCostStatus: ADDITIONAL_COST_STATUSES.PENDING_APPROVAL,
-
-    updateData: {
-      additionalCostStatus: approved
-        ? ADDITIONAL_COST_STATUSES.APPROVED
-        : ADDITIONAL_COST_STATUSES.REJECTED,
-
-      additionalCostReviewedBy: actor.userId,
-
-      additionalCostReviewedAt: new Date(),
-    },
+    costId,
+    approved,
+    reviewedBy: actor.userId,
   });
 
   if (!updatedDelivery) {
@@ -861,6 +893,27 @@ const reviewAdditionalShippingCost = async ({
   return formatDelivery(updatedDelivery);
 };
 
+const updateDeliverySettings = async ({ autoApprovalThreshold, actor }) => {
+  if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
+    throw new AppError(
+      "Only logistics managers can update delivery settings",
+      403,
+      "FORBIDDEN",
+    );
+  }
+  const threshold = Number(autoApprovalThreshold);
+  if (!Number.isFinite(threshold) || threshold < 0) {
+    throw new AppError(
+      "autoApprovalThreshold must be a non-negative number",
+      400,
+      "INVALID_AUTO_APPROVAL_THRESHOLD",
+    );
+  }
+  return deliverySettingsDal.updateSettings({
+    autoApprovalThreshold: threshold,
+  });
+};
+
 module.exports = {
   createDeliveryForOrder,
   getDeliveryById,
@@ -869,4 +922,6 @@ module.exports = {
   updateDeliveryStatus,
   requestAdditionalShippingCost,
   reviewAdditionalShippingCost,
+  updateDeliverySettings,
+  notifyDeliveriesArrivingSoon,
 };

@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const productDal = require("../dal/productDal");
 const userDal = require("../dal/userDal");
 const inventoryDal = require("../dal/inventoryDal");
+const { USER_ROLES } = require("../utils/usersUtils");
 const {
   validateObjectId,
   validateName,
@@ -10,6 +11,7 @@ const {
   validateUnitPrice,
   validateVisibility,
   validateImageUrl,
+  validateExpiryDate,
 } = require("../utils/product.validationUtils");
 const AppError = require("../utils/AppError");
 
@@ -70,7 +72,7 @@ const verifySupplier = async (/** @type {string} */ supplierId) => {
     throw new AppError("Supplier not found", 404, "SUPPLIER_NOT_FOUND");
   }
 
-  if (supplier.role !== "Supplier") {
+  if (supplier.role !== USER_ROLES.SUPPLIER) {
     throw new AppError(
       "The selected user is not a supplier",
       400,
@@ -87,11 +89,11 @@ const resolveSupplierIdForCreation = async (
     actor,
   },
 ) => {
-  if (actor.role === "Supplier") {
+  if (actor.role === USER_ROLES.SUPPLIER) {
     return actor.userId;
   }
 
-  if (actor.role === "LogisticsManager") {
+  if (actor.role === USER_ROLES.LOGISTICS_MANAGER) {
     if (!requestedSupplierId) {
       throw new AppError(
         "supplierId is required when a manager creates a product",
@@ -111,12 +113,13 @@ const resolveSupplierIdForCreation = async (
 const assertCanManageProduct = (
   /** @type {{ product: any, actor: any }} */ { product, actor },
 ) => {
-  if (actor.role === "LogisticsManager") {
+  if (actor.role === USER_ROLES.LOGISTICS_MANAGER) {
     return;
   }
 
   const ownsProduct =
-    actor.role === "Supplier" && product.supplierId.toString() === actor.userId;
+    actor.role === USER_ROLES.SUPPLIER &&
+    product.supplierId.toString() === actor.userId;
 
   if (!ownsProduct) {
     throw new AppError(
@@ -140,7 +143,7 @@ const createProduct = async (
    * during account creation. Managers may supply
    * another supplier ID, which was verified above.
    */
-  if (actor.role === "Supplier") {
+  if (actor.role === USER_ROLES.SUPPLIER) {
     await verifySupplier(supplierId);
   }
 
@@ -153,11 +156,13 @@ const createProduct = async (
   const unitPrice = validateUnitPrice(productInput.unitPrice);
 
   const visibility =
-    productInput.visibility === undefined
+    actor.role === USER_ROLES.SUPPLIER || productInput.visibility === undefined
       ? "Hidden"
       : validateVisibility(productInput.visibility);
 
   const imageUrl = validateImageUrl(productInput.imageUrl);
+
+  const expiryDate = validateExpiryDate(productInput.expiryDate);
 
   const existingProduct = await productDal.findProductBySupplierAndSku({
     supplierId,
@@ -187,6 +192,7 @@ const createProduct = async (
           visibility,
           supplierId,
           unitPrice,
+          expiryDate,
         },
         session,
       );
@@ -250,6 +256,43 @@ const getPublicProducts = async (
   });
 };
 
+const getPendingProducts = async (
+  /** @type {{ actor: any, page: number, limit: number, search: string }} */ {
+    actor,
+    page: pageInput,
+    limit: limitInput,
+    search,
+  },
+) => {
+  const { page, limit, skip } = getPagination({
+    page: pageInput,
+    limit: limitInput,
+  });
+
+  const normalizedSearch = typeof search === "string" ? search.trim() : "";
+
+  const [products, total] = await Promise.all([
+    productDal.findPendingProducts({
+      actor,
+      search: normalizedSearch,
+      skip,
+      limit,
+    }),
+
+    productDal.countPendingProducts({
+      actor,
+      search: normalizedSearch,
+    }),
+  ]);
+
+  return buildPaginatedResult({
+    products,
+    total,
+    page,
+    limit,
+  });
+};
+
 const getPublicProductById = async (/** @type {string} */ productId) => {
   validateObjectId(productId, "product ID");
 
@@ -271,7 +314,7 @@ const getMyProducts = async (
     visibility,
   },
 ) => {
-  if (actor.role !== "Supplier") {
+  if (actor.role !== USER_ROLES.SUPPLIER) {
     throw new AppError(
       "Only suppliers can access their product list",
       403,
@@ -324,7 +367,7 @@ const getAllProducts = async (
     visibility,
   },
 ) => {
-  if (actor.role !== "LogisticsManager") {
+  if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
     throw new AppError(
       "Only logistics managers can access all products",
       403,
@@ -406,12 +449,12 @@ const updateProduct = async (
     updateData.unitPrice = validateUnitPrice(productInput.unitPrice);
   }
 
-  if (productInput.visibility !== undefined) {
-    updateData.visibility = validateVisibility(productInput.visibility);
-  }
-
   if (productInput.imageUrl !== undefined) {
     updateData.imageUrl = validateImageUrl(productInput.imageUrl);
+  }
+
+  if (productInput.expiryDate !== undefined) {
+    updateData.expiryDate = validateExpiryDate(productInput.expiryDate);
   }
 
   let targetSupplierId = product.supplierId.toString();
@@ -421,7 +464,7 @@ const updateProduct = async (
    * another supplier.
    */
   if (productInput.supplierId !== undefined) {
-    if (actor.role !== "LogisticsManager") {
+    if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
       throw new AppError(
         "Suppliers cannot reassign products",
         403,
@@ -477,20 +520,40 @@ const updateProduct = async (
   return updatedProduct;
 };
 
-const deleteProduct = async (
-  /** @type {{ productId: string, actor: any }} */ { productId, actor },
-) => {
+const setProductStatus = async ({ productId, status, actor }) => {
   validateObjectId(productId, "product ID");
 
-  const product = await productDal.findProductById(productId);
+  if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
+    throw new AppError("Only logistics managers can review products", 403, "FORBIDDEN");
+  }
+
+  const product = await productDal.updateProductById({
+    productId,
+    updateData: { status },
+  });
 
   if (!product) {
     throw new AppError("Product not found", 404, "PRODUCT_NOT_FOUND");
   }
 
-  assertCanManageProduct({ product, actor });
+  return product;
+};
 
-  await productDal.deleteProductById({ productId });
+const updateProductVisibility = async ({ productId, visibility, actor }) => {
+  validateObjectId(productId, "product ID");
+
+  if (actor.role !== USER_ROLES.LOGISTICS_MANAGER) {
+    throw new AppError("Only logistics managers can change product visibility", 403, "FORBIDDEN");
+  }
+
+  const product = await productDal.updateProductById({
+    productId,
+    updateData: { visibility: validateVisibility(visibility) },
+  });
+
+  if (!product) {
+    throw new AppError("Product not found", 404, "PRODUCT_NOT_FOUND");
+  }
 
   return product;
 };
@@ -502,5 +565,6 @@ module.exports = {
   getMyProducts,
   getAllProducts,
   updateProduct,
-  deleteProduct,
+  setProductStatus,
+  updateProductVisibility,
 };

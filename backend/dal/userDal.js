@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const { escapeRegex } = require("../utils/regexUtils");
 
 const User = require("../models/userModel");
@@ -40,7 +40,7 @@ const findUserByEmailWithPassword = async (/** @type {string} */ email) => {
   return User.findOne({ email }).select("+password").lean();
 };
 
-// @ts-ignore
+
 const findUsers = async ({ role, search, skip = 0, limit = 20 }) => {
   const filter = {};
 
@@ -75,7 +75,7 @@ const findUsers = async ({ role, search, skip = 0, limit = 20 }) => {
     .lean();
 };
 
-// @ts-ignore
+
 const countUsers = async ({ role, search }) => {
   const filter = {};
 

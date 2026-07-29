@@ -1,6 +1,6 @@
 const Product = require("../models/productModel");
 const { buildSearchFilter } = require("../utils/regexUtils");
-//@ts-ignore
+
 const createProduct = async (productData, session) => {
   if (session) {
     const [product] = await Product.create([productData], { session });
@@ -24,7 +24,12 @@ const findProductsByIds = async (/** @type {string[]} */ productIds) => {
 const findPublicProductById = async (/** @type {string} */ productId) => {
   return Product.findOne({
     _id: productId,
+    status: "Approved",
     visibility: "Public",
+    $or: [
+      { expiryDate: null },
+      { expiryDate: { $gt: new Date() } },
+    ],
   })
     .populate("supplierId", "username email role")
     .lean();
@@ -49,7 +54,12 @@ const findPublicProducts = async (
   },
 ) => {
   const filter = /** @type {any} */ ({
+    status: "Approved",
     visibility: "Public",
+    $or: [
+      { expiryDate: null },
+      { expiryDate: { $gt: new Date() } },
+    ],
     ...buildSearchFilter(search),
   });
 
@@ -74,7 +84,12 @@ const countPublicProducts = async (
   },
 ) => {
   const filter = /** @type {any} */ ({
+    status: "Approved",
     visibility: "Public",
+    $or: [
+      { expiryDate: null },
+      { expiryDate: { $gt: new Date() } },
+    ],
     ...buildSearchFilter(search),
   });
 
@@ -184,6 +199,43 @@ const countAllProducts = async (
   return Product.countDocuments(filter);
 };
 
+const findPendingProducts = async (
+  /** @type {{ actor: any, search?: string, skip?: number, limit?: number }} */ {
+    actor,
+    search,
+    skip = 0,
+    limit = 20,
+  },
+) => {
+  const filter = /** @type {any} */ ({
+    status: {
+      $eq: "Pending",
+    },
+    ...buildSearchFilter(search),
+  });
+
+  return Product.find(filter)
+    .sort({
+      createdAt: -1,
+    })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+};
+
+const countPendingProducts = async (
+  /** @type {{ actor: any, search?: string }} */ { actor, search },
+) => {
+  const filter = /** @type {any} */ ({
+    status: {
+      $eq: "Pending",
+    },
+    ...buildSearchFilter(search),
+  });
+
+  return Product.countDocuments(filter);
+};
+
 const updateProductById = async (
   /** @type {{ productId: string, updateData: object }} */ {
     productId,
@@ -202,12 +254,6 @@ const updateProductById = async (
   ).lean();
 };
 
-const deleteProductById = async (
-  /** @type {{ productId: string }} */ { productId },
-) => {
-  return Product.findByIdAndDelete(productId).lean();
-};
-
 module.exports = {
   createProduct,
   findProductById,
@@ -220,6 +266,7 @@ module.exports = {
   countProductsBySupplierId,
   findAllProducts,
   countAllProducts,
+  findPendingProducts,
+  countPendingProducts,
   updateProductById,
-  deleteProductById,
 };

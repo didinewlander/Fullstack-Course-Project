@@ -30,6 +30,28 @@ const getInventoryById = asyncHandler(async (req, res) => {
   });
 });
 
+const getInventoryByProductId = asyncHandler(async (req, res) => {
+  const inventory = await inventoryService.getInventoryByProductId({
+    productId: req.params.productId,
+    actor: req.auth,
+  });
+
+  res.status(200).json({ success: true, data: inventory });
+});
+
+const getInventoryCount = asyncHandler(async (req, res) => {
+  const result = await inventoryService.getInventoryCount({ actor: req.auth });
+  res.status(200).json({ success: true, data: result });
+});
+
+const getInventoryItemCount = asyncHandler(async (req, res) => {
+  const result = await inventoryService.getInventoryItemCount({
+    inventoryId: req.params.inventoryId,
+    actor: req.auth,
+  });
+  res.status(200).json({ success: true, data: result });
+});
+
 const getMyInventory = asyncHandler(async (req, res) => {
   const result = await inventoryService.getMyInventory({
     actor: req.auth,
@@ -107,12 +129,28 @@ const adjustCurrentStock = asyncHandler(async (req, res) => {
   });
 });
 
+const calculateEoqMinimumStock = asyncHandler(async (req, res) => {
+  const inventory = await inventoryService.calculateEoqMinimumStock({
+    inventoryId: req.params.inventoryId,
+    annualDemand: req.body.annualDemand,
+    orderingCost: req.body.orderingCost,
+    holdingCost: req.body.holdingCost,
+    actor: req.auth,
+  });
+
+  res.status(200).json({ success: true, data: inventory });
+});
+
 module.exports = {
   createInventoryForProduct,
   getInventoryById,
+  getInventoryByProductId,
+  getInventoryCount,
+  getInventoryItemCount,
   getMyInventory,
   getAllInventory,
   restockInventory,
   updateMinimumStockLevel,
   adjustCurrentStock,
+  calculateEoqMinimumStock,
 };

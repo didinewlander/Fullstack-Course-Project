@@ -15,7 +15,7 @@ const ProductSchema = new mongoose.Schema(
       maxlength: 2000,
       default: "",
     },
-
+    // stock keeping unit - meaning a way to identify the specific storage type of the product, e.g. "1kg bag", "500g bag", "1L bottle", etc.
     sku: {
       type: String,
       required: true,
@@ -27,7 +27,11 @@ const ProductSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-
+    status: {
+      type: String,
+      enum: ["Pending", "Approved", "Rejected"],
+      default: "Pending",
+    },
     visibility: {
       type: String,
       enum: ["Public", "Hidden"],
@@ -45,6 +49,10 @@ const ProductSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+    },
+    expiryDate: {
+      type: Date,
+      required: false,
     },
   },
   {

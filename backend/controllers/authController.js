@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const authService = require("../services/auth.service");
 const userService = require("../services/user.service");
 const asyncHandler = require("../utils/routerHandler");

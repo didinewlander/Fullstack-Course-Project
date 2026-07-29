@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const AppError = require("../utils/AppError");
 
 const fs = require("fs/promises");

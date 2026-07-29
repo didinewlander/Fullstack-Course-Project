@@ -2,6 +2,8 @@ const express = require("express");
 
 const {
   createDeliveryForOrder,
+  createDelivery,
+  getDeliveries,
   getDeliveryById,
   getMyDeliveries,
   getAllDeliveries,
@@ -9,6 +11,7 @@ const {
   requestAdditionalShippingCost,
   approveAdditionalShippingCost,
   rejectAdditionalShippingCost,
+  updateDeliverySettings,
 } = require("../controllers/deliveryController");
 
 const {
@@ -21,6 +24,14 @@ const { USER_ROLES } = require("../utils/usersUtils");
 const router = express.Router();
 
 router.use(authenticate);
+
+router.get("/", getDeliveries);
+
+router.post(
+  "/",
+  authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
+  createDelivery,
+);
 
 router.post(
   "/orders/:orderId",
@@ -39,6 +50,12 @@ router.get(
   authorizeRoles(USER_ROLES.VENDOR, USER_ROLES.SUPPLIER),
 
   getMyDeliveries,
+);
+
+router.patch(
+  "/settings",
+  authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
+  updateDeliverySettings,
 );
 
 router.get(
@@ -60,7 +77,7 @@ router.patch(
 );
 
 router.post(
-  "/:deliveryId/additional-cost",
+  "/:deliveryId/costs",
 
   authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
 
@@ -68,7 +85,7 @@ router.post(
 );
 
 router.post(
-  "/:deliveryId/additional-cost/approve",
+  "/:deliveryId/costs/:costId/approve",
 
   authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
 
@@ -76,7 +93,7 @@ router.post(
 );
 
 router.post(
-  "/:deliveryId/additional-cost/reject",
+  "/:deliveryId/costs/:costId/reject",
 
   authorizeRoles(USER_ROLES.LOGISTICS_MANAGER),
 

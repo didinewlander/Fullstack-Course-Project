@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 const asyncHandler = require("../utils/routerHandler");
 const AppError = require("../utils/AppError");
 const Order = require("../models/orderModel");
