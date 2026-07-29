@@ -4,14 +4,17 @@
   "description": "זהו קובץ ה-README של צד השרת. כאן נציג בגדול כיצד השרת יהיה בנוי.\r נעבוד לפי פיצ'רים שנבנה אחד אחרי השני.",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --watch server.js",
+    "seed:notifications": "node scripts/notificationRuleSeed.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
