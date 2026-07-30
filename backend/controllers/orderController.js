@@ -82,6 +82,40 @@ const cancelOrder = asyncHandler(async (req, res) => {
   });
 });
 
+
+/* Supplier counter-proposes a pickup date they can meet. */
+const proposePickupDate = asyncHandler(async (req, res) => {
+  const order = await orderService.proposePickupDate({
+    orderId: req.params.orderId,
+    proposalInput: req.body,
+    actor: req.auth,
+  });
+
+  res.status(200).json({ success: true, data: order });
+});
+
+/* Vendor accepts the proposed date - it becomes the order's pickup date. */
+const acceptPickupProposal = asyncHandler(async (req, res) => {
+  const order = await orderService.respondToPickupProposal({
+    orderId: req.params.orderId,
+    accept: true,
+    actor: req.auth,
+  });
+
+  res.status(200).json({ success: true, data: order });
+});
+
+/* Vendor rejects it - the proposal clears, the order stays as originally asked. */
+const rejectPickupProposal = asyncHandler(async (req, res) => {
+  const order = await orderService.respondToPickupProposal({
+    orderId: req.params.orderId,
+    accept: false,
+    actor: req.auth,
+  });
+
+  res.status(200).json({ success: true, data: order });
+});
+
 module.exports = {
   createOrder,
   getOrderById,
@@ -89,4 +123,7 @@ module.exports = {
   getAllOrders,
   approveOrder,
   cancelOrder,
+  proposePickupDate,
+  acceptPickupProposal,
+  rejectPickupProposal,
 };

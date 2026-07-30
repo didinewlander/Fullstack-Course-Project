@@ -1,13 +1,42 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/dashboards/Dashboard";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { USER_ROLES } from "./constants/roles";
+
+// vendor
 import ProductCatalog from "./pages/dashboards/vendor/ProductCatalog";
 import NewOrder from "./pages/dashboards/vendor/NewOrder";
 import OrderList from "./pages/dashboards/vendor/OrderList";
+
+// supplier
+import SupplierOverview from "./pages/dashboards/supplier/SupplierOverview";
+import SupplierProducts from "./pages/dashboards/supplier/SupplierProducts";
+import SupplierInventory from "./pages/dashboards/supplier/SupplierInventory";
+import SupplierOrders from "./pages/dashboards/supplier/SupplierOrders";
+
+// manager
+import ManagerOverview from "./pages/dashboards/manager/ManagerOverview";
 import ManagerOrders from "./pages/dashboards/manager/ManagerOrders";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ManagerProducts from "./pages/dashboards/manager/ManagerProducts";
+import ManagerInventory from "./pages/dashboards/manager/ManagerInventory";
+import ManagerUsers from "./pages/dashboards/manager/ManagerUsers";
+
+// shared by every role - the endpoints behind them already scope themselves
+// to the caller, so one page serves all three
+import DeliveriesPage from "./pages/dashboards/shared/DeliveriesPage";
+import InvoicesPage from "./pages/dashboards/shared/InvoicesPage";
+
 import "./App.css";
+
+const { VENDOR, SUPPLIER, LOGISTICS_MANAGER } = USER_ROLES;
+
+// Every private route names the role(s) allowed on it, so a logged in user of
+// the wrong role is redirected to their own dashboard instead of being shown a
+// page whose API calls would all 403 (see ProtectedRoute.jsx).
+const guarded = (roles, element) => (
+  <ProtectedRoute allowedRoles={roles}>{element}</ProtectedRoute>
+);
 
 function App() {
   return (
@@ -16,46 +45,82 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* private pages, only for logged in users (see ProtectedRoute.jsx) */}
-      <Route
-        path="/dashboard/manager"
-        element={
-          <ProtectedRoute>
-            <ManagerOrders />
-          </ProtectedRoute>
-        }
-      />
+      {/* ---------- vendor ---------- */}
       <Route
         path="/dashboard/vendor"
-        element={
-          <ProtectedRoute>
-            <ProductCatalog />
-          </ProtectedRoute>
-        }
+        element={guarded([VENDOR], <ProductCatalog />)}
       />
       <Route
         path="/dashboard/vendor/new-order"
-        element={
-          <ProtectedRoute>
-            <NewOrder />
-          </ProtectedRoute>
-        }
+        element={guarded([VENDOR], <NewOrder />)}
       />
       <Route
         path="/dashboard/vendor/orders"
-        element={
-          <ProtectedRoute>
-            <OrderList />
-          </ProtectedRoute>
-        }
+        element={guarded([VENDOR], <OrderList />)}
       />
       <Route
+        path="/dashboard/vendor/deliveries"
+        element={guarded([VENDOR], <DeliveriesPage />)}
+      />
+      <Route
+        path="/dashboard/vendor/invoices"
+        element={guarded([VENDOR], <InvoicesPage />)}
+      />
+
+      {/* ---------- supplier ---------- */}
+      <Route
         path="/dashboard/supplier"
-        element={
-          <ProtectedRoute>
-            <Dashboard title="Supplier Dashboard" />
-          </ProtectedRoute>
-        }
+        element={guarded([SUPPLIER], <SupplierOverview />)}
+      />
+      <Route
+        path="/dashboard/supplier/products"
+        element={guarded([SUPPLIER], <SupplierProducts />)}
+      />
+      <Route
+        path="/dashboard/supplier/inventory"
+        element={guarded([SUPPLIER], <SupplierInventory />)}
+      />
+      <Route
+        path="/dashboard/supplier/orders"
+        element={guarded([SUPPLIER], <SupplierOrders />)}
+      />
+      <Route
+        path="/dashboard/supplier/deliveries"
+        element={guarded([SUPPLIER], <DeliveriesPage />)}
+      />
+      <Route
+        path="/dashboard/supplier/invoices"
+        element={guarded([SUPPLIER], <InvoicesPage />)}
+      />
+
+      {/* ---------- logistics manager ---------- */}
+      <Route
+        path="/dashboard/manager"
+        element={guarded([LOGISTICS_MANAGER], <ManagerOverview />)}
+      />
+      <Route
+        path="/dashboard/manager/orders"
+        element={guarded([LOGISTICS_MANAGER], <ManagerOrders />)}
+      />
+      <Route
+        path="/dashboard/manager/products"
+        element={guarded([LOGISTICS_MANAGER], <ManagerProducts />)}
+      />
+      <Route
+        path="/dashboard/manager/inventory"
+        element={guarded([LOGISTICS_MANAGER], <ManagerInventory />)}
+      />
+      <Route
+        path="/dashboard/manager/deliveries"
+        element={guarded([LOGISTICS_MANAGER], <DeliveriesPage />)}
+      />
+      <Route
+        path="/dashboard/manager/invoices"
+        element={guarded([LOGISTICS_MANAGER], <InvoicesPage />)}
+      />
+      <Route
+        path="/dashboard/manager/users"
+        element={guarded([LOGISTICS_MANAGER], <ManagerUsers />)}
       />
 
       {/* default route, just send people to the login page */}

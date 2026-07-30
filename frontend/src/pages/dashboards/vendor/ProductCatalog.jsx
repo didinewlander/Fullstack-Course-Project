@@ -1,59 +1,88 @@
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import VendorNav from "../../../components/VendorNav";
-import { setSearchText } from "../../../redux/productsSlice";
+import DashboardLayout from "../../../components/DashboardLayout";
+import DataState from "../../../components/DataState";
+import { fetchProducts, setSearchText } from "../../../redux/productsSlice";
+import { getAvailableStock } from "../../../api/inventoryApi";
+import { formatMoney } from "../../../utils/orderCalculations";
+import { fileUrl } from "../../../api/client";
 import "./ProductCatalog.css";
 
-// this is the vendor's product catalog page (issue #7, vendor part)
-// vendors can see all available products and search them by name
-// the product list lives in Redux (see redux/productsSlice.js)
-// it's fake/mock data for now, real data comes later once the backend
-// (issue #10) and the API layer (issue #9) are ready
+// vendor's product catalog (issues #7, #9)
+// real GET /api/v1/products, plus each product's stock from the separate
+// inventory collection. Search is applied server-side.
 function ProductCatalog() {
   const dispatch = useDispatch();
 
-  const products = useSelector((state) => state.products.items);
-  const searchText = useSelector((state) => state.products.searchText);
-
-  // only keep the products whose name matches what the vendor typed
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchText.toLowerCase())
+  const { items: products, searchText, isLoading, error } = useSelector(
+    (state) => state.products,
   );
 
-  function handleSearchChange(event) {
-    dispatch(setSearchText(event.target.value));
-  }
+  // Debounced so typing does not fire a request per keystroke.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      dispatch(fetchProducts(searchText ? { search: searchText } : {}));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [dispatch, searchText]);
 
   return (
-    <div className="catalog-page">
-      <VendorNav />
-
-      <h2>Product Catalog</h2>
-
+    <DashboardLayout heading="Product Catalog">
       <input
         type="text"
         placeholder="Search products..."
         value={searchText}
-        onChange={handleSearchChange}
+        onChange={(event) => dispatch(setSearchText(event.target.value))}
         className="catalog-search"
       />
 
-      {filteredProducts.length === 0 ? (
-        <p>No products found.</p>
-      ) : (
+      <DataState
+        isLoading={isLoading}
+        error={error}
+        isEmpty={products.length === 0}
+        emptyMessage="No products found."
+        onRetry={() => dispatch(fetchProducts())}
+      >
         <div className="catalog-grid">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="catalog-card">
-              <div className="catalog-card-image">{product.image}</div>
-              <h3>{product.name}</h3>
-              <p className="catalog-card-price">
-                ${product.price.toFixed(2)}
-              </p>
-              <p className="catalog-card-stock">In stock: {product.stock}</p>
-            </div>
-          ))}
+          {products.map((product) => {
+            const available = getAvailableStock(product.inventory);
+
+            return (
+              <div key={product._id} className="catalog-card">
+                <div className="catalog-card-image">
+                  {product.imageUrl ? (
+                    <img src={fileUrl(product.imageUrl)} alt={product.name} />
+                  ) : (
+                    <span aria-hidden="true">📦</span>
+                  )}
+                </div>
+
+                <h3>{product.name}</h3>
+                <p className="catalog-card-sku">{product.sku}</p>
+
+                {product.description && (
+                  <p className="catalog-card-description">
+                    {product.description}
+                  </p>
+                )}
+
+                <p className="catalog-card-price">
+                  {formatMoney(product.unitPrice)}
+                </p>
+
+                {/* stock lives in the Inventory collection, not on the product */}
+                <p className="catalog-card-stock">
+                  {product.inventory
+                    ? `In stock: ${available}`
+                    : "Stock not tracked"}
+                </p>
+              </div>
+            );
+          })}
         </div>
-      )}
-    </div>
+      </DataState>
+    </DashboardLayout>
   );
 }
 

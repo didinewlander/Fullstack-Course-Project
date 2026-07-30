@@ -8,6 +8,9 @@ const {
   getAllOrders,
   approveOrder,
   cancelOrder,
+  proposePickupDate,
+  acceptPickupProposal,
+  rejectPickupProposal,
 } = require(
   "../controllers/orderController",
 );
@@ -88,6 +91,31 @@ router.post(
   ),
   orderSubmissionLimiter,
   approveOrder,
+);
+
+/*
+ * Pickup date renegotiation. The order stays Pending Approval throughout and
+ * no stock is reserved until the supplier finally approves.
+ */
+router.post(
+  "/:orderId/propose-date",
+  authorizeRoles(
+    USER_ROLES.SUPPLIER,
+    USER_ROLES.LOGISTICS_MANAGER,
+  ),
+  proposePickupDate,
+);
+
+router.post(
+  "/:orderId/propose-date/accept",
+  authorizeRoles(USER_ROLES.VENDOR),
+  acceptPickupProposal,
+);
+
+router.post(
+  "/:orderId/propose-date/reject",
+  authorizeRoles(USER_ROLES.VENDOR),
+  rejectPickupProposal,
 );
 
 router.post(

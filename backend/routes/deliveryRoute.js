@@ -4,6 +4,7 @@ const {
   createDeliveryForOrder,
   createDelivery,
   getDeliveries,
+  downloadDeliveryNote,
   getDeliveryById,
   getMyDeliveries,
   getAllDeliveries,
@@ -67,6 +68,12 @@ router.get(
 );
 
 router.get("/:deliveryId", getDeliveryById);
+
+/*
+ * Proof-of-delivery document. Any party to the delivery may read it once
+ * warehouse processing has completed.
+ */
+router.get("/:deliveryId/note", downloadDeliveryNote);
 
 router.patch(
   "/:deliveryId/status",

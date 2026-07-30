@@ -843,6 +843,192 @@ const cancelOrder = async ({ orderId, actor }) => {
   return cancelledOrder;
 };
 
+
+/* ------------------------------------------------------------------ *
+ * Pickup date renegotiation
+ *
+ * A supplier who can fulfil an order but not by the date asked for can
+ * counter-propose the earliest date they can meet. The vendor then accepts
+ * (the order takes the new date and continues) or rejects (the proposal is
+ * cleared and the order goes back to being decided as-is).
+ *
+ * Throughout, the order stays Pending Approval and NOTHING is reserved -
+ * stock is only committed when the supplier finally approves.
+ * ------------------------------------------------------------------ */
+
+/** Supplier proposes a date they can actually meet. */
+const proposePickupDate = async ({ orderId, proposalInput, actor }) => {
+  validateObjectId(orderId, "order ID");
+
+  const order = await orderDal.findOrderById(orderId);
+
+  if (!order) {
+    throw new AppError("Order not found", 404, "ORDER_NOT_FOUND");
+  }
+
+  const isManager = actor.role === USER_ROLES.LOGISTICS_MANAGER;
+
+  const isOwningSupplier =
+    actor.role === USER_ROLES.SUPPLIER &&
+    order.supplierId.toString() === actor.userId;
+
+  if (!isManager && !isOwningSupplier) {
+    throw new AppError(
+      "You cannot propose a date for this order",
+      403,
+      "FORBIDDEN",
+    );
+  }
+
+  if (order.status !== ORDER_STATUSES.PENDING_APPROVAL) {
+    throw new AppError(
+      "Only a pending order can have its pickup date renegotiated",
+      409,
+      "ORDER_NOT_PENDING",
+    );
+  }
+
+  // reuses the shared rule, so a proposal can never be in the past either
+  const proposedPickupDate = validatePickupDate(proposalInput.proposedPickupDate);
+
+  if (proposedPickupDate.getTime() === new Date(order.requestedPickupDate).getTime()) {
+    throw new AppError(
+      "The proposed date is the same as the requested date",
+      400,
+      "PROPOSED_DATE_UNCHANGED",
+    );
+  }
+
+  const reason =
+    typeof proposalInput.reason === "string"
+      ? proposalInput.reason.trim().slice(0, 500)
+      : "";
+
+  const updatedOrder = await orderDal.updateOrderById({
+    orderId,
+    expectedStatus: ORDER_STATUSES.PENDING_APPROVAL,
+
+    updateData: {
+      proposedPickupDate,
+
+      pickupProposal: {
+        status: "Proposed",
+        reason,
+        proposedBy: actor.userId,
+        proposedAt: new Date(),
+        respondedAt: null,
+        originalPickupDate: order.requestedPickupDate,
+      },
+    },
+  });
+
+  if (!updatedOrder) {
+    throw new AppError(
+      "The order changed before the date could be proposed",
+      409,
+      "ORDER_STATUS_CONFLICT",
+    );
+  }
+
+  await notificationService.createEventNotifications({
+    eventKey: NOTIFICATION_EVENTS.ORDER_STATUS_UPDATED,
+    recipientUserIds: [order.orderedByUserId.toString()],
+    relatedEntityType: "Order",
+    relatedEntityId: order._id.toString(),
+    context: {
+      orderId: order._id.toString(),
+      status: "Pickup date proposed",
+    },
+  }).catch(() => {});
+
+  return updatedOrder;
+};
+
+/**
+ * Vendor answers the proposal.
+ *
+ * Accepting moves requestedPickupDate to the proposed date, so everything
+ * downstream - delivery scheduling, the invoice, the PDFs - reads the agreed
+ * date with no special-casing. The original is preserved on the proposal.
+ */
+const respondToPickupProposal = async ({ orderId, accept, actor }) => {
+  validateObjectId(orderId, "order ID");
+
+  const order = await orderDal.findOrderById(orderId);
+
+  if (!order) {
+    throw new AppError("Order not found", 404, "ORDER_NOT_FOUND");
+  }
+
+  const isOwningVendor =
+    actor.role === USER_ROLES.VENDOR &&
+    order.orderedByUserId.toString() === actor.userId;
+
+  if (!isOwningVendor) {
+    throw new AppError(
+      "Only the vendor who placed the order can answer this proposal",
+      403,
+      "FORBIDDEN",
+    );
+  }
+
+  if (order.pickupProposal?.status !== "Proposed") {
+    throw new AppError(
+      "There is no pickup date proposal awaiting your response",
+      409,
+      "NO_PENDING_PICKUP_PROPOSAL",
+    );
+  }
+
+  const respondedAt = new Date();
+
+  const updateData = accept
+    ? {
+        requestedPickupDate: order.proposedPickupDate,
+        proposedPickupDate: null,
+        pickupProposal: {
+          ...order.pickupProposal,
+          status: "Accepted",
+          respondedAt,
+        },
+      }
+    : {
+        proposedPickupDate: null,
+        pickupProposal: {
+          ...order.pickupProposal,
+          status: "Rejected",
+          respondedAt,
+        },
+      };
+
+  const updatedOrder = await orderDal.updateOrderById({
+    orderId,
+    expectedStatus: ORDER_STATUSES.PENDING_APPROVAL,
+    updateData,
+  });
+
+  if (!updatedOrder) {
+    throw new AppError(
+      "The order changed before the response could be recorded",
+      409,
+      "ORDER_STATUS_CONFLICT",
+    );
+  }
+
+  await notificationService.createEventNotifications({
+    eventKey: NOTIFICATION_EVENTS.ORDER_STATUS_UPDATED,
+    recipientUserIds: [order.supplierId.toString()],
+    relatedEntityType: "Order",
+    relatedEntityId: order._id.toString(),
+    context: {
+      orderId: order._id.toString(),
+      status: accept ? "Pickup date accepted" : "Pickup date rejected",
+    },
+  }).catch(() => {});
+
+  return updatedOrder;
+};
+
 module.exports = {
   createOrder,
   getOrderById,
@@ -850,4 +1036,6 @@ module.exports = {
   getAllOrders,
   approveOrder,
   cancelOrder,
+  proposePickupDate,
+  respondToPickupProposal,
 };

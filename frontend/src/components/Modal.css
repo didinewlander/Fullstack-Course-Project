@@ -1,0 +1,132 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(20, 20, 40, 0.45);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  animation: modal-fade 0.12s ease-out;
+}
+
+.modal-panel {
+  width: min(30rem, 100%);
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+  background: var(--c-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: modal-rise 0.14s ease-out;
+}
+
+@keyframes modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-rise {
+  from { opacity: 0; transform: translateY(6px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop,
+  .modal-panel {
+    animation: none;
+  }
+}
+
+.modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5) var(--space-3);
+}
+
+.modal-head h3 {
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.modal-description {
+  font-size: 0.83rem;
+  color: var(--c-text-muted);
+  margin-top: var(--space-1);
+  line-height: 1.45;
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  color: var(--c-text-faint);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  border-radius: var(--radius-sm);
+}
+
+.modal-close:hover {
+  color: var(--c-text);
+  background: var(--c-surface-alt);
+}
+
+.modal-body {
+  padding: 0 var(--space-5) var(--space-4);
+}
+
+.modal-body .field {
+  margin-bottom: var(--space-4);
+}
+
+.modal-body .field:last-child {
+  margin-bottom: 0;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--c-border);
+  background: var(--c-surface-alt);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* current-value hint shown under a field in a modal */
+.modal-hint {
+  font-size: 0.76rem;
+  color: var(--c-text-faint);
+  margin-top: var(--space-1);
+}
+
+.modal-readout {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 0.85rem;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.modal-readout:last-of-type {
+  border-bottom: none;
+}
+
+.modal-readout dt {
+  color: var(--c-text-muted);
+}
+
+.modal-readout dd {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* document viewing needs far more room than a form does */
+.modal-panel-wide {
+  width: min(56rem, 100%);
+  max-height: calc(100vh - 3rem);
+}

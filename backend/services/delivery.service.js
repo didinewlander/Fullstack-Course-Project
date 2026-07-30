@@ -7,6 +7,10 @@ const deliverySettingsDal = require("../dal/deliverySettingsDal");
 const notificationRuleDal = require("../dal/notificationRuleDal");
 
 const orderDal = require("../dal/orderDal");
+const {
+  buildDeliveryNotePdf,
+  buildDeliveryNoteFileName,
+} = require("./deliveryNotePdf.service");
 const userDal = require("../dal/userDal");
 const inventoryService = require("./inventory.service");
 const notificationService = require("./notification.service");
@@ -914,6 +918,51 @@ const updateDeliverySettings = async ({ autoApprovalThreshold, actor }) => {
   });
 };
 
+
+/**
+ * Renders the delivery note - proof of what was physically delivered.
+ *
+ * Only available once the delivery is complete: before that there is nothing
+ * to attest to, and a half-finished note would be misleading evidence.
+ *
+ * Visible to the supplier who delivered, the vendor who received, and any
+ * manager - the same rule as viewing the delivery itself.
+ */
+const renderDeliveryNote = async ({ deliveryId, actor }) => {
+  validateObjectId(deliveryId, "delivery ID");
+
+  const delivery = await deliveryDal.findDeliveryById(deliveryId);
+
+  if (!delivery) {
+    throw new AppError("Delivery not found", 404, "DELIVERY_NOT_FOUND");
+  }
+
+  assertCanViewDelivery({ delivery, actor });
+
+  if (delivery.status !== DELIVERY_STATUSES.WAREHOUSE_COMPLETED) {
+    throw new AppError(
+      "The delivery note is available once warehouse processing is complete",
+      409,
+      "DELIVERY_NOT_COMPLETED",
+    );
+  }
+
+  /*
+   * The order carries the item snapshots and the populated party names; the
+   * delivery record itself only stores ids.
+   */
+  const order = await orderDal.findOrderById(
+    delivery.orderId?._id ?? delivery.orderId,
+  );
+
+  const buffer = await buildDeliveryNotePdf({ delivery, order });
+
+  return {
+    buffer,
+    fileName: buildDeliveryNoteFileName({ delivery, order }),
+  };
+};
+
 module.exports = {
   createDeliveryForOrder,
   getDeliveryById,
@@ -924,4 +973,5 @@ module.exports = {
   reviewAdditionalShippingCost,
   updateDeliverySettings,
   notifyDeliveriesArrivingSoon,
+  renderDeliveryNote,
 };

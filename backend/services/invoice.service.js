@@ -14,7 +14,15 @@ const { roundMoney } = require("./orderPricing.service");
 const notificationService = require("./notification.service");
 
 const crypto = require("crypto");
+const fs = require("fs/promises");
+const path = require("path");
 const mongoose = require("mongoose");
+
+const {
+  buildInvoicePdf,
+  buildInvoiceFileName,
+} = require("./invoicePdf.service");
+const { uploadDirectory } = require("../middleware/invoiceUploadMiddleware");
 
 const invoiceDal = require("../dal/invoiceDal");
 
@@ -594,6 +602,141 @@ const approveInvoice = async ({ invoiceId, actor }) => {
   return formatInvoice(approvedInvoice);
 };
 
+/*
+ * Renders the invoice as a PDF from the stored record.
+ *
+ * The order is loaded alongside it because the cost breakdown - subtotal,
+ * shipping, storage, customs, VAT - lives on the order, while the invoice
+ * only carries the final amount.
+ */
+const renderInvoicePdf = async ({ invoiceId, actor }) => {
+  validateObjectId(invoiceId, "invoice ID");
+
+  const invoice = await invoiceDal.findInvoiceById(invoiceId);
+
+  if (!invoice) {
+    throw new AppError("Invoice not found", 404, "INVOICE_NOT_FOUND");
+  }
+
+  /*
+   * Same visibility rule as downloading the stored file: a vendor may only
+   * see an invoice once it is approved, so a draft under review never leaks
+   * to the party being billed.
+   */
+  assertCanViewInvoice(invoice, actor);
+
+  if (
+    actor.role === USER_ROLES.VENDOR &&
+    invoice.status !== INVOICE_STATUSES.APPROVED
+  ) {
+    throw new AppError("The invoice is not ready", 403, "INVOICE_NOT_READY");
+  }
+
+  /*
+   * Re-read with the user refs populated. findInvoiceById returns raw
+   * ObjectIds, which would print the supplier and vendor as ids and strip the
+   * vendor name out of the filename.
+   */
+  const detailedInvoice =
+    (await invoiceDal.findInvoiceByIdWithDetails(invoiceId)) ?? invoice;
+
+  const order = await orderDal.findOrderById(
+    invoice.orderId?._id ?? invoice.orderId,
+  );
+
+  const buffer = await buildInvoicePdf({ invoice: detailedInvoice, order });
+
+  return {
+    buffer,
+    fileName: buildInvoiceFileName(detailedInvoice),
+  };
+};
+
+/**
+ * Generates the PDF and stores it as the invoice's file.
+ *
+ * This is what makes a draft submittable without the supplier having to
+ * produce a document elsewhere: submitInvoiceForApproval requires
+ * storagePath to be set, and this fills it in from the invoice's own data.
+ *
+ * Draft-only, for the same reason attachInvoiceFile is - the file backing a
+ * submitted or approved invoice must not change underneath it.
+ */
+const generateInvoiceFile = async ({ invoiceId, actor }) => {
+  validateObjectId(invoiceId, "invoice ID");
+
+  const invoice = await invoiceDal.findInvoiceById(invoiceId);
+
+  if (!invoice) {
+    throw new AppError("Invoice not found", 404, "INVOICE_NOT_FOUND");
+  }
+
+  assertCanManageInvoice(invoice, actor);
+
+  if (invoice.status !== INVOICE_STATUSES.DRAFT) {
+    throw new AppError(
+      "The invoice file can only be changed while the invoice is a draft",
+      409,
+      "INVOICE_FILE_CANNOT_BE_CHANGED",
+    );
+  }
+
+  // populated copy, so the document shows names rather than ids
+  const detailedInvoice =
+    (await invoiceDal.findInvoiceByIdWithDetails(invoiceId)) ?? invoice;
+
+  const order = await orderDal.findOrderById(
+    invoice.orderId?._id ?? invoice.orderId,
+  );
+
+  const buffer = await buildInvoicePdf({ invoice: detailedInvoice, order });
+
+  const fileName = `${crypto.randomUUID()}.pdf`;
+  const absolutePath = path.join(uploadDirectory, fileName);
+
+  await fs.mkdir(uploadDirectory, { recursive: true });
+  await fs.writeFile(absolutePath, buffer);
+
+  /*
+   * storagePath is stored relative to the process working directory, the
+   * same shape multer produces, so downloadInvoiceFile resolves both kinds
+   * identically.
+   */
+  const storagePath = path.relative(process.cwd(), absolutePath);
+
+  const previousStoragePath = invoice.storagePath;
+
+  const updatedInvoice = await invoiceDal.updateInvoiceById({
+    invoiceId,
+    expectedStatus: INVOICE_STATUSES.DRAFT,
+
+    updateData: {
+      storagePath,
+      fileUrl: storagePath,
+      originalFileName: buildInvoiceFileName(detailedInvoice),
+      mimeType: "application/pdf",
+      fileSize: buffer.length,
+    },
+  });
+
+  if (!updatedInvoice) {
+    // the invoice moved on mid-write; drop the file we just made
+    await fs.unlink(absolutePath).catch(() => {});
+
+    throw new AppError(
+      "The invoice changed before the file could be generated",
+      409,
+      "INVOICE_STATUS_CONFLICT",
+    );
+  }
+
+  return {
+    invoice: formatInvoice(updatedInvoice),
+
+    previousStoragePath,
+  };
+};
+
 const getInvoiceFile = async ({ invoiceId, actor }) => {
   validateObjectId(invoiceId, "invoice ID");
 
@@ -620,10 +763,21 @@ const getInvoiceFile = async ({ invoiceId, actor }) => {
     throw new AppError("The invoice is not ready", 403, "INVOICE_NOT_READY");
   }
 
+  /*
+   * originalFileName is already the friendly name for a generated file. For
+   * an uploaded one it is whatever the supplier called it, and if neither
+   * exists we build the name from a populated copy.
+   */
+  const downloadName =
+    invoice.originalFileName ??
+    buildInvoiceFileName(
+      (await invoiceDal.findInvoiceByIdWithDetails(invoiceId)) ?? invoice,
+    );
+
   return {
     storagePath: invoice.storagePath,
 
-    downloadName: invoice.originalFileName ?? `${invoice.invoiceNumber}.pdf`,
+    downloadName,
   };
 };
 
@@ -633,6 +787,8 @@ module.exports = {
   getMyInvoices,
   getAllInvoices,
   attachInvoiceFile,
+  generateInvoiceFile,
+  renderInvoicePdf,
   submitInvoiceForApproval,
   approveInvoice,
   getInvoiceFile,

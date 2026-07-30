@@ -120,6 +120,62 @@ const OrderSchema = new mongoose.Schema(
       required: true,
     },
 
+    /*
+     * Pickup date renegotiation.
+     *
+     * A supplier who can fulfil the order but not by the requested date may
+     * counter-propose the earliest date they can meet, instead of the only
+     * options being approve-as-asked or decline outright. The order stays
+     * Pending Approval throughout - nothing is reserved until the vendor
+     * accepts and the supplier then approves.
+     */
+    proposedPickupDate: {
+      type: Date,
+      default: null,
+    },
+
+    pickupProposal: {
+      status: {
+        type: String,
+        enum: ["None", "Proposed", "Accepted", "Rejected"],
+        default: "None",
+        required: true,
+      },
+
+      // why the original date could not be met
+      reason: {
+        type: String,
+        trim: true,
+        maxlength: 500,
+        default: "",
+      },
+
+      proposedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null,
+      },
+
+      proposedAt: {
+        type: Date,
+        default: null,
+      },
+
+      respondedAt: {
+        type: Date,
+        default: null,
+      },
+
+      /*
+       * The date originally asked for, kept so the history of the
+       * negotiation survives once requestedPickupDate is overwritten.
+       */
+      originalPickupDate: {
+        type: Date,
+        default: null,
+      },
+    },
+
     pricing: {
       subtotal: {
         type: Number,
@@ -135,6 +191,13 @@ const OrderSchema = new mongoose.Schema(
       },
 
       storageCost: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0,
+      },
+
+      customsCost: {
         type: Number,
         required: true,
         min: 0,

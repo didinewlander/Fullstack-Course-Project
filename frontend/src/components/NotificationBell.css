@@ -1,0 +1,166 @@
+.notification-bell {
+  position: relative;
+}
+
+.notification-bell > button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border: 1px solid var(--c-border-strong);
+  background: var(--c-surface);
+  color: var(--c-text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.notification-bell > button:hover,
+.notification-bell > button.is-open {
+  background: var(--c-surface-alt);
+  color: var(--c-text);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--c-danger);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  min-width: 1.05rem;
+  padding: 0.18rem 0.25rem;
+  text-align: center;
+  border: 2px solid var(--c-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.notification-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  width: min(23rem, 88vw);
+  max-height: 26rem;
+  overflow-y: auto;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  text-align: left;
+}
+
+.notification-panel-header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+  font-size: 0.85rem;
+}
+
+.notification-panel-header button {
+  border: none;
+  background: transparent;
+  color: var(--c-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0;
+}
+
+.notification-panel-header button:hover {
+  text-decoration: underline;
+}
+
+.notification-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notification-panel li {
+  border-bottom: 1px solid var(--c-border);
+}
+
+.notification-panel li:last-child {
+  border-bottom: none;
+}
+
+.notification-panel li.unread {
+  background: var(--c-primary-soft);
+}
+
+/* the whole row is the click target */
+.notification-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font: inherit;
+}
+
+.notification-item:hover {
+  background: var(--c-surface-alt);
+}
+
+.notification-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.85rem;
+  color: var(--c-text);
+}
+
+.notification-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--c-primary);
+  flex: none;
+}
+
+.notification-message {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--c-text-muted);
+  line-height: 1.45;
+  margin: 0.2rem 0 0.3rem;
+}
+
+.notification-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: 0.72rem;
+  color: var(--c-text-faint);
+}
+
+.notification-go {
+  color: var(--c-primary);
+  font-weight: 600;
+}
+
+.notification-empty {
+  padding: var(--space-5) var(--space-4);
+  font-size: 0.82rem;
+  color: var(--c-text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.notification-retry {
+  display: block;
+  margin: var(--space-3) auto 0;
+}

@@ -8,6 +8,8 @@ const {
   getMyInvoices,
   getAllInvoices,
   attachInvoiceFile,
+  generateInvoiceFile,
+  previewInvoiceFile,
   submitInvoiceForApproval,
   approveInvoice,
   downloadInvoiceFile,
@@ -52,6 +54,23 @@ router.get(
 router.get("/:invoiceId", getInvoiceById);
 
 router.get("/:invoiceId/file", downloadInvoiceFile);
+
+/*
+ * Renders the invoice as a PDF on the fly and returns it inline, without
+ * storing anything - the review copy.
+ */
+router.get("/:invoiceId/preview", previewInvoiceFile);
+
+/*
+ * Generates the PDF from the invoice's own data and stores it as the
+ * invoice file, so a draft can be submitted without the supplier having to
+ * produce a document elsewhere.
+ */
+router.post(
+  "/:invoiceId/generate",
+  authorizeRoles(USER_ROLES.SUPPLIER, USER_ROLES.LOGISTICS_MANAGER),
+  generateInvoiceFile,
+);
 
 router.patch(
   "/:invoiceId/file",
