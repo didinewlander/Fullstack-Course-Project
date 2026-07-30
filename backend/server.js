@@ -28,6 +28,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use("/uploads", express.static("uploads"));
 
+// @ts-ignore
+app.use("/api/users", userRouter);
+app.use("/api/products", productRouter);
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/orders", orderRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/notification-rules", notificationRuleRoutes);
+app.use("/api/invoices", invoiceRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/deliveries", deliveryRoutes);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/products", productRouter);
 app.use("/api/v1/auth", authRouter);

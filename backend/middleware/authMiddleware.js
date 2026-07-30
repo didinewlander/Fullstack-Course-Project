@@ -36,6 +36,11 @@ const authenticate = (req, res, next) => {
       tokenId: payload.jti,
     };
 
+    req.user = {
+      ...req.auth,
+      id: payload.sub,
+    };
+
     return next();
   } catch {
     return next(

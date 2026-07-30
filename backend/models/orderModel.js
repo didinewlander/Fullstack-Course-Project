@@ -1,187 +1,117 @@
-const {
-  ORDER_STATUSES,
-  ORDER_STATUS_VALUES,
-  INVENTORY_RESERVATION_STATUS_VALUES,
-  INVENTORY_RESERVATION_STATUSES,
-} = require("../utils/orderUtils");
-
 const mongoose = require("mongoose");
 
-const OrderItemSchema = new mongoose.Schema(
-  {
-    productId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Product",
-      required: true,
-    },
-
-    /*
-     * Historical snapshots.
-     *
-     * These remain unchanged even when the product
-     * name, SKU, or price changes later.
-     */
-    productNameAtOrder: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    skuAtOrder: {
-      type: String,
-      required: true,
-      trim: true,
-      uppercase: true,
-    },
-
-    quantity: {
-      type: Number,
-      required: true,
-      min: 1,
-      validate: {
-        validator: Number.isInteger,
-        message: "Order item quantity must be an integer",
-      },
-    },
-
-    unitPriceAtOrder: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-
-    lineTotal: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
-  },
-  {
-    /*
-     * Embedded order items do not need separate IDs.
-     */
-    _id: false,
-  },
-);
+const ORDER_STATUS_VALUES = Object.freeze([
+  "pending",
+  "approved",
+  "inTransit",
+  "arrivingSoon",
+  "delivered",
+  "billed",
+  "cancelled",
+]);
 
 const OrderSchema = new mongoose.Schema(
   {
-    inventoryReservationStatus: {
-      type: String,
-      enum: INVENTORY_RESERVATION_STATUS_VALUES,
-      default: INVENTORY_RESERVATION_STATUSES.NONE,
-      required: true,
-    },
-
-    inventoryReservedAt: {
-      type: Date,
-      default: null,
-    },
-
-    inventoryReleasedAt: {
-      type: Date,
-      default: null,
-    },
-
-    inventoryCommittedAt: {
-      type: Date,
-      default: null,
-    },
-    orderedByUserId: {
+    vendorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
     },
 
-    supplierId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      index: true,
-    },
-
-    items: {
-      type: [OrderItemSchema],
+    products: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+      ],
       required: true,
       validate: {
-        /**
-         * @param {string | any[]} items
-         */
-        validator(items) {
-          return Array.isArray(items) && items.length > 0;
+        validator: /** @param {any[]} value */ function (value) {
+          return Array.isArray(value) && value.length > 0;
         },
-        message: "An order must contain at least one item",
+        message: "products must be a non-empty array",
       },
     },
 
-    requestedPickupDate: {
+    quantities: {
+      type: [Number],
+      required: true,
+      validate: [
+        {
+          validator: /** @param {number[]} value */ function (value) {
+            return Array.isArray(value) && value.length > 0;
+          },
+          message: "quantities must be a non-empty array",
+        },
+        {
+          /** @this {{ products: any[] }} */
+          validator: /** @param {number[]} value */ function (value) {
+            return Array.isArray(this.products) && this.products.length === value.length;
+          },
+          message: "quantities length must match products length",
+        },
+      ],
+    },
+
+    pickupDate: {
       type: Date,
       required: true,
-    },
-
-    pricing: {
-      subtotal: {
-        type: Number,
-        required: true,
-        min: 0,
-      },
-
-      shippingCost: {
-        type: Number,
-        required: true,
-        min: 0,
-        default: 0,
-      },
-
-      storageCost: {
-        type: Number,
-        required: true,
-        min: 0,
-        default: 0,
-      },
-
-      taxAmount: {
-        type: Number,
-        required: true,
-        min: 0,
-        default: 0,
-      },
-    },
-
-    calculatedTotal: {
-      type: Number,
-      required: true,
-      min: 0,
     },
 
     status: {
       type: String,
       enum: ORDER_STATUS_VALUES,
-      default: ORDER_STATUSES.PENDING_APPROVAL,
+      default: "pending",
       required: true,
       index: true,
     },
 
-    isAutoApproved: {
-      type: Boolean,
-      default: false,
+    pricing: {
+      basePrice: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0,
+      },
+      shipping: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0,
+      },
+      storage: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0,
+      },
+      customs: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0,
+      },
+      vat: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0,
+      },
+      total: {
+        type: Number,
+        required: true,
+        min: 0,
+        default: 0,
+      },
     },
 
-    cancellationPenaltyApplied: {
+    cancellationFee: {
       type: Number,
-      min: 0,
       default: 0,
-    },
-
-    cancelledAt: {
-      type: Date,
-      default: null,
-    },
-
-    approvedAt: {
-      type: Date,
-      default: null,
+      min: 0,
     },
   },
   {
@@ -189,17 +119,5 @@ const OrderSchema = new mongoose.Schema(
     versionKey: false,
   },
 );
-
-OrderSchema.index({
-  supplierId: 1,
-  status: 1,
-  createdAt: -1,
-});
-
-OrderSchema.index({
-  orderedByUserId: 1,
-  createdAt: -1,
-});
-
 
 module.exports = mongoose.model("Order", OrderSchema);
