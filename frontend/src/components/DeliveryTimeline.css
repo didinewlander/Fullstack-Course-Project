@@ -1,0 +1,103 @@
+.timeline {
+  list-style: none;
+  display: flex;
+  gap: 0;
+  margin: var(--space-3) 0;
+  padding: 0;
+  overflow-x: auto;
+}
+
+.timeline-step {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 5.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 0.2rem;
+}
+
+/* the connecting rail, drawn behind each marker */
+.timeline-step::before {
+  content: "";
+  position: absolute;
+  top: 0.72rem;
+  left: -50%;
+  width: 100%;
+  height: 2px;
+  background: var(--c-border);
+}
+
+.timeline-step:first-child::before {
+  display: none;
+}
+
+.timeline-step.timeline-done::before,
+.timeline-step.timeline-current::before {
+  background: var(--c-primary);
+}
+
+.timeline-marker {
+  position: relative;
+  z-index: 1;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--c-surface);
+  border: 2px solid var(--c-border);
+  color: var(--c-text-faint);
+}
+
+.timeline-done .timeline-marker {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: #fff;
+}
+
+.timeline-current .timeline-marker {
+  background: var(--c-surface);
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+  box-shadow: 0 0 0 4px var(--c-primary-soft);
+}
+
+.timeline-body {
+  display: block;
+  margin-top: 0.4rem;
+}
+
+.timeline-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--c-text-faint);
+}
+
+.timeline-done .timeline-label {
+  color: var(--c-text-muted);
+}
+
+.timeline-current .timeline-label {
+  color: var(--c-primary);
+}
+
+.timeline-hint {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--c-text-faint);
+  margin-top: 0.1rem;
+  line-height: 1.3;
+}
+
+.timeline-compact .timeline-step {
+  min-width: 3.2rem;
+}
+
+.timeline-compact .timeline-label {
+  font-size: 0.68rem;
+}

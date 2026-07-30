@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --watch server.js",
-    "seed:notifications": "node scripts/notificationRuleSeed.js"
+    "seed:notifications": "node scripts/notificationRuleSeed.js",
+    "seed:manager": "node scripts/managerSeed.js"
   },
   "keywords": [],
   "author": "",
@@ -15,12 +16,14 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.2",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.7.0",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "pdfkit": "^0.19.1"
   }
 }

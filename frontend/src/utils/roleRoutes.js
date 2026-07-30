@@ -1,11 +1,18 @@
 // this file just decides which dashboard page belongs to which role
 // we keep it in one place so we don't repeat this logic in Login and Register
 
-export function getDashboardPathByRole(role) {
-  if (role === "manager") return "/dashboard/manager";
-  if (role === "vendor") return "/dashboard/vendor";
-  if (role === "supplier") return "/dashboard/supplier";
+import { USER_ROLES } from "../constants/roles";
 
+// keyed by the role strings the SERVER sends. These used to be lowercase
+// invented names ("manager"/"vendor"/"supplier"), so every real login fell
+// through to the fallback and bounced the user back to /login.
+const DASHBOARD_PATH_BY_ROLE = {
+  [USER_ROLES.LOGISTICS_MANAGER]: "/dashboard/manager",
+  [USER_ROLES.VENDOR]: "/dashboard/vendor",
+  [USER_ROLES.SUPPLIER]: "/dashboard/supplier",
+};
+
+export function getDashboardPathByRole(role) {
   // fallback, just in case role is missing or unknown
-  return "/login";
+  return DASHBOARD_PATH_BY_ROLE[role] ?? "/login";
 }

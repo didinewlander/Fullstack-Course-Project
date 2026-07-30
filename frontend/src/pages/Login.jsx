@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import { getDashboardPathByRole } from "../utils/roleRoutes";
 import "./Auth.css";
 
+// matches the server rule in backend/utils/usersUtils.js (validatePassword).
+// this used to be 6, so a 6 or 7 character password passed here and then
+// failed on the server with a confusing error.
+const MIN_PASSWORD_LENGTH = 8;
+
 function Login() {
-  const { login } = useAuth();
+  const { login, user, isBootstrapped, isSubmitting, error } = useAuth();
   const navigate = useNavigate();
 
   // one state object for both form fields, easier to manage
@@ -13,6 +18,12 @@ function Login() {
 
   // this will hold error messages, one per field
   const [errors, setErrors] = useState({});
+
+  // already signed in (e.g. opened /login on a live session) -> go straight
+  // to the right dashboard instead of asking for credentials again
+  if (isBootstrapped && user) {
+    return <Navigate to={getDashboardPathByRole(user.role)} replace />;
+  }
 
   // runs every time the user types in an input
   function handleChange(event) {
@@ -32,8 +43,8 @@ function Login() {
 
     if (!form.password) {
       newErrors.password = "Password is required";
-    } else if (form.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (form.password.length < MIN_PASSWORD_LENGTH) {
+      newErrors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`;
     }
 
     setErrors(newErrors);
@@ -42,24 +53,35 @@ function Login() {
     return Object.keys(newErrors).length === 0;
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     if (!validate()) {
       return; // stop here, do not submit, errors are already shown
     }
 
-    // TODO: this should call the real login API once issue #5 + #4 are done
-    const loggedInUser = login(form);
+    try {
+      // real POST /api/v1/auth/login (issues #4, #5)
+      const loggedInUser = await login(form);
 
-    // send the user straight to the dashboard that matches their role
-    navigate(getDashboardPathByRole(loggedInUser.role));
+      // send the user straight to the dashboard that matches their role
+      navigate(getDashboardPathByRole(loggedInUser.role));
+    } catch {
+      // the message from the server is already in `error` from the store,
+      // and is rendered below the form
+    }
   }
 
   return (
     <div className="auth-page">
       <div className="auth-card">
+        <div className="auth-brand">
+          <span className="auth-mark" aria-hidden="true">DH</span>
+          <span>Do-Hook-In</span>
+        </div>
+
         <h1>Login</h1>
+        <p className="auth-subtitle">Sign in to your logistics workspace.</p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="auth-field">
@@ -68,6 +90,7 @@ function Login() {
               id="email"
               name="email"
               type="email"
+              autoComplete="email"
               value={form.email}
               onChange={handleChange}
               className={errors.email ? "error" : ""}
@@ -81,6 +104,7 @@ function Login() {
               id="password"
               name="password"
               type="password"
+              autoComplete="current-password"
               value={form.password}
               onChange={handleChange}
               className={errors.password ? "error" : ""}
@@ -90,8 +114,15 @@ function Login() {
             )}
           </div>
 
-          <button type="submit" className="auth-submit">
-            Login
+          {/* whatever the API said went wrong, e.g. INVALID_CREDENTIALS */}
+          {error && <p className="auth-error-banner">{error.message}</p>}
+
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Signing in…" : "Login"}
           </button>
         </form>
 

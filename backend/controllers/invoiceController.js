@@ -183,12 +183,60 @@ const downloadInvoiceFile = asyncHandler(async (req, res) => {
   res.download(absolutePath, file.downloadName);
 });
 
+/*
+ * Renders the invoice as a PDF and streams it straight back, WITHOUT storing
+ * it. This is the review copy - a supplier can look at exactly what the
+ * document will say before committing to it.
+ */
+const previewInvoiceFile = asyncHandler(async (req, res) => {
+  const { buffer, fileName } = await invoiceService.renderInvoicePdf({
+    invoiceId: req.params.invoiceId,
+    actor: req.auth,
+  });
+
+  res.setHeader("Content-Type", "application/pdf");
+
+  // inline, so the browser opens it in a tab instead of downloading it
+  res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+  res.setHeader("Content-Length", buffer.length);
+
+  res.send(buffer);
+});
+
+/*
+ * Generates the PDF and saves it as the invoice's file, replacing any
+ * previously attached one.
+ */
+const generateInvoiceFile = asyncHandler(async (req, res) => {
+  const { invoice, previousStoragePath } =
+    await invoiceService.generateInvoiceFile({
+      invoiceId: req.params.invoiceId,
+      actor: req.auth,
+    });
+
+  // remove the superseded file, but never fail the request over it
+  if (previousStoragePath) {
+    const absolutePath = path.resolve(process.cwd(), previousStoragePath);
+
+    if (absolutePath.startsWith(`${uploadDirectory}${path.sep}`)) {
+      await fs.unlink(absolutePath).catch(() => {});
+    }
+  }
+
+  res.status(200).json({
+    success: true,
+    data: invoice,
+  });
+});
+
 module.exports = {
   createInvoiceForOrder,
   getInvoiceById,
   getMyInvoices,
   getAllInvoices,
   attachInvoiceFile,
+  generateInvoiceFile,
+  previewInvoiceFile,
   submitInvoiceForApproval,
   approveInvoice,
   downloadInvoiceFile,

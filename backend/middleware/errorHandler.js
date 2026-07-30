@@ -40,7 +40,32 @@ const errorHandler = (error, req, res, next) => {
     });
   }
 
-  console.error("Unexpected error:", error);
+  /*
+   * Thrown by express.json() before any route runs. It already carries
+   * statusCode 400, but without this branch it fell through to the generic
+   * handler below and a malformed request body came back as a 500 - which
+   * reads like a server fault when it is the client's payload.
+   */
+  if (error?.type === "entity.parse.failed") {
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: "INVALID_JSON_BODY",
+        message: "The request body is not valid JSON",
+      },
+    });
+  }
+
+  if (error?.type === "entity.too.large") {
+    return res.status(413).json({
+      success: false,
+      error: {
+        code: "REQUEST_BODY_TOO_LARGE",
+        message: "The request body is too large",
+      },
+    });
+  }
+
   if (error?.name === "MulterError") {
     if (error.code === "LIMIT_FILE_SIZE") {
       return res.status(413).json({
@@ -70,6 +95,14 @@ const errorHandler = (error, req, res, next) => {
       },
     });
   }
+
+  /*
+   * Only genuinely unhandled errors are logged. This used to sit above the
+   * upload branches, so every ordinary "wrong file type" or "file too big"
+   * was printed as an unexpected error with a full stack trace.
+   */
+  console.error("Unexpected error:", error);
+
   return res.status(500).json({
     success: false,
     error: {

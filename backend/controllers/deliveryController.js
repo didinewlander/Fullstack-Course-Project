@@ -178,6 +178,24 @@ const rejectAdditionalShippingCost = asyncHandler(async (req, res) => {
   });
 });
 
+
+/*
+ * Streams the delivery note inline so it can be read in the browser rather
+ * than landing in the downloads folder.
+ */
+const downloadDeliveryNote = asyncHandler(async (req, res) => {
+  const { buffer, fileName } = await deliveryService.renderDeliveryNote({
+    deliveryId: req.params.deliveryId,
+    actor: req.auth,
+  });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
+  res.setHeader("Content-Length", buffer.length);
+
+  res.send(buffer);
+});
+
 module.exports = {
   createDeliveryForOrder,
   createDelivery,
@@ -190,4 +208,5 @@ module.exports = {
   approveAdditionalShippingCost,
   rejectAdditionalShippingCost,
   updateDeliverySettings,
+  downloadDeliveryNote,
 };

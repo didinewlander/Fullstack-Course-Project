@@ -1,80 +1,101 @@
-.manager-orders-page {
-  padding: 2rem;
-}
-
-.manager-orders-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
 .manager-orders-tabs {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+  padding: var(--space-1);
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  width: fit-content;
 }
 
 .manager-orders-tabs button {
-  background: none;
-  border: 1px solid #ccc;
-  border-radius: 999px;
-  padding: 0.4rem 1rem;
+  padding: 0.4rem 0.85rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  font: inherit;
+  font-size: 0.83rem;
+  color: var(--c-text-muted);
 }
 
 .manager-orders-tabs button.active {
-  background: #6a2cf5;
-  color: #fff;
-  border-color: #6a2cf5;
+  background: var(--c-surface);
+  color: var(--c-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
 }
 
 .manager-orders-bulk-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  font-size: 0.85rem;
 }
 
 .manager-orders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-width: 640px;
+  display: grid;
+  gap: var(--space-3);
 }
 
 .manager-order-card {
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 1rem;
-  background: #fff;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
 }
 
 .manager-order-card-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 0.5rem;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
 }
 
 .manager-order-checkbox {
   display: flex;
-  gap: 0.5rem;
   align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
 }
 
 .manager-order-pickup {
-  font-size: 0.85rem;
-  color: #666;
-  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  color: var(--c-text-faint);
+  margin-top: 0.1rem;
 }
 
 .manager-order-items {
-  color: #444;
-  margin-bottom: 0.5rem;
+  font-size: 0.86rem;
+  color: var(--c-text-muted);
+  margin: var(--space-2) 0;
 }
 
 .manager-order-total {
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #6a2cf5;
+  color: var(--c-primary);
+  margin-top: var(--space-2);
+}
+
+.manager-order-card details > summary {
+  cursor: pointer;
+  font-size: 0.84rem;
+  color: var(--c-primary);
+  padding: var(--space-2) 0;
+}
+
+.manager-order-card > .btn {
+  margin-top: var(--space-2);
 }

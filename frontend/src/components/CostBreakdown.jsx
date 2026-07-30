@@ -1,12 +1,26 @@
-import { calculateOrderCost } from "../utils/orderCalculations";
+import {
+  formatMoney,
+  getPricingRows,
+  calculateSelectionSubtotal,
+} from "../utils/orderCalculations";
 import "./CostBreakdown.css";
 
-// shared cost breakdown table (issue #12): base price per item, shipping,
-// storage, customs and VAT - used both as a live preview on the new order
-// form and as a per-order detail view in the vendor/manager order lists
-function CostBreakdown({ items }) {
-  const { lineItems, subtotal, shipping, storage, customs, vat, total } =
-    calculateOrderCost(items);
+// Shared cost breakdown table (issue #12).
+//
+// Two modes, because there are genuinely two situations:
+//
+//  1. An existing order -> pass `order`. Every number shown comes straight
+//     from order.pricing / order.calculatedTotal, which the server
+//     calculated and stored. Nothing is recomputed here.
+//
+//  2. The New Order form, before anything is submitted -> pass `items`.
+//     There is no server-side price yet, so we show the line items and
+//     their subtotal only, and say plainly that the final total is worked
+//     out on submit. Guessing here would just produce a number that
+//     disagrees with the created order.
+function CostBreakdown({ order, items }) {
+  const lineItems = order?.items ?? items ?? [];
+  const pricingRows = getPricingRows(order);
 
   return (
     <div className="cost-breakdown">
@@ -15,47 +29,56 @@ function CostBreakdown({ items }) {
           <tr>
             <th>Item</th>
             <th>Qty</th>
-            <th>Base price</th>
+            <th>Unit price</th>
             <th>Line total</th>
           </tr>
         </thead>
         <tbody>
-          {lineItems.map((item) => (
-            <tr key={item.productId}>
-              <td>{item.name}</td>
-              <td>{item.quantity}</td>
-              <td>${item.price.toFixed(2)}</td>
-              <td>${item.lineTotal.toFixed(2)}</td>
-            </tr>
-          ))}
+          {lineItems.map((item) => {
+            // saved orders carry the frozen snapshot fields, a pending
+            // selection on the form carries the live product fields
+            const name = item.productNameAtOrder ?? item.name;
+            const unitPrice = item.unitPriceAtOrder ?? item.unitPrice;
+            const lineTotal = item.lineTotal ?? unitPrice * item.quantity;
+
+            return (
+              <tr key={item.productId}>
+                <td>{name}</td>
+                <td>{item.quantity}</td>
+                <td>{formatMoney(unitPrice)}</td>
+                <td>{formatMoney(lineTotal)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
       <div className="cost-breakdown-summary">
-        <div>
-          <span>Subtotal</span>
-          <span>${subtotal.toFixed(2)}</span>
-        </div>
-        <div>
-          <span>Shipping</span>
-          <span>${shipping.toFixed(2)}</span>
-        </div>
-        <div>
-          <span>Storage</span>
-          <span>${storage.toFixed(2)}</span>
-        </div>
-        <div>
-          <span>Customs</span>
-          <span>${customs.toFixed(2)}</span>
-        </div>
-        <div>
-          <span>VAT</span>
-          <span>${vat.toFixed(2)}</span>
-        </div>
-        <div className="cost-breakdown-total">
-          <span>Total</span>
-          <span>${total.toFixed(2)}</span>
-        </div>
+        {pricingRows ? (
+          <>
+            {pricingRows.map((row) => (
+              <div key={row.label}>
+                <span>{row.label}</span>
+                <span>{formatMoney(row.value)}</span>
+              </div>
+            ))}
+            <div className="cost-breakdown-total">
+              <span>Total</span>
+              <span>{formatMoney(order.calculatedTotal)}</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <span>Subtotal</span>
+              <span>{formatMoney(calculateSelectionSubtotal(lineItems))}</span>
+            </div>
+            <p className="cost-breakdown-note">
+              Shipping, storage and tax are calculated by the server when the
+              order is submitted.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

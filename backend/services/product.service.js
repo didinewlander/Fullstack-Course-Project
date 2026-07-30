@@ -564,6 +564,7 @@ module.exports = {
   getPublicProductById,
   getMyProducts,
   getAllProducts,
+  getPendingProducts,
   updateProduct,
   setProductStatus,
   updateProductVisibility,

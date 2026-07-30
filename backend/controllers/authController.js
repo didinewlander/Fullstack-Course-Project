@@ -8,16 +8,11 @@ const REFRESH_COOKIE_NAME = "refreshToken";
 
 const getRefreshCookieOptions = () => {
   const days = getRefreshTokenDays();
-
   return {
     httpOnly: true,
-
     secure: process.env.NODE_ENV === "production",
-
     sameSite: "lax",
-
     path: "/api/v1/auth",
-
     maxAge: days * 24 * 60 * 60 * 1000,
   };
 };
@@ -78,7 +73,9 @@ const login = asyncHandler(async (req, res) => {
 const refresh = asyncHandler(async (req, res) => {
   const currentRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
 
-  const result = await authService.refresh(currentRefreshToken);
+  const result = await authService.refresh({
+    refreshToken: currentRefreshToken,
+  });
 
   setRefreshTokenCookie(res, result.refreshToken);
 
@@ -94,7 +91,7 @@ const refresh = asyncHandler(async (req, res) => {
 const logout = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
 
-  await authService.logout(refreshToken);
+  await authService.logout({ refreshToken });
 
   clearRefreshTokenCookie(res);
 
@@ -102,7 +99,7 @@ const logout = asyncHandler(async (req, res) => {
 });
 
 const logoutAll = asyncHandler(async (req, res) => {
-  await authService.logoutAll(req.auth.userId);
+  await authService.logoutAll({ userId: req.auth.userId });
 
   clearRefreshTokenCookie(res);
 
