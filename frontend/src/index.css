@@ -57,16 +57,15 @@ body {
   margin: 0;
 }
 
+/*
+ * Left over from the Vite starter this app was scaffolded from, #root used to
+ * be a centred 1126px column with a border down each side. That capped every
+ * page - the dashboard header could never reach the edge of the window, and
+ * the login split screen could not be full bleed - and the centred text was
+ * wrong everywhere outside the starter page.
+ */
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
 }
 
 h1,

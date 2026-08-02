@@ -1,0 +1,713 @@
+/*
+ * The dark half of the auth split screen.
+ *
+ * Every moving part lives at the bottom of this file, inside a single
+ * prefers-reduced-motion: no-preference block. Nothing here starts at
+ * opacity 0, so if a visitor has asked for less motion they get the finished
+ * layout instantly rather than a panel that never fades in.
+ */
+
+.auth-showcase {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(2rem, 4vw, 3.6rem);
+  color: rgba(233, 232, 255, 0.82);
+  background:
+    linear-gradient(152deg, #17143a 0%, #241f63 46%, #3a30ad 100%);
+  text-align: left;
+}
+
+/*
+ * Two blurred colour fields drifting behind the content. A blurred radial
+ * gradient reads as depth in a way a flat gradient never does, and it costs
+ * two pseudo-elements instead of an image.
+ */
+.auth-showcase::before,
+.auth-showcase::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  border-radius: 50%;
+  filter: blur(70px);
+  pointer-events: none;
+}
+
+.auth-showcase::before {
+  width: 30rem;
+  height: 30rem;
+  top: -11rem;
+  left: -9rem;
+  opacity: 0.55;
+  background: radial-gradient(circle, #7c6bff, transparent 68%);
+}
+
+.auth-showcase::after {
+  width: 26rem;
+  height: 26rem;
+  right: -9rem;
+  bottom: -9rem;
+  opacity: 0.4;
+  background: radial-gradient(circle, #22d3ee, transparent 68%);
+}
+
+/* faint dot grid, masked so it fades out before it reaches the edges */
+.auth-showcase-grid {
+  position: absolute;
+  inset: -2px;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.16) 1px,
+    transparent 1.4px
+  );
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(
+    130% 95% at 28% 18%,
+    #000 18%,
+    transparent 76%
+  );
+  mask-image: radial-gradient(130% 95% at 28% 18%, #000 18%, transparent 76%);
+}
+
+.auth-showcase-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.9rem;
+  width: 100%;
+  max-width: 33rem;
+  margin-inline: auto;
+}
+
+/* ---------- brand ---------- */
+
+.auth-showcase-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.auth-showcase-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #fff;
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.3),
+    rgba(255, 255, 255, 0.08)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 6px 18px rgba(6, 4, 26, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.auth-showcase-name {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.auth-showcase-tag {
+  display: block;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(233, 232, 255, 0.55);
+}
+
+/* ---------- headline ---------- */
+
+.auth-showcase-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: flex-start;
+}
+
+.auth-showcase-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+.auth-live-dot {
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: #4ade80;
+}
+
+/* 18ch lands the break after "from", so the accent phrase gets its own line */
+.auth-showcase-title {
+  margin: 0;
+  max-width: 18ch;
+  font-size: clamp(2rem, 3.2vw, 2.9rem);
+  font-weight: 680;
+  line-height: 1.07;
+  letter-spacing: -0.032em;
+  color: #fff;
+}
+
+/*
+ * Gradient text: the fallback matters, so the colour is only made transparent
+ * once we know background-clip: text is supported.
+ */
+.auth-showcase-accent {
+  color: #a5b4fc;
+}
+
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .auth-showcase-accent {
+    background-image: linear-gradient(
+      100deg,
+      #a5b4fc 0%,
+      #67e8f9 35%,
+      #a5b4fc 70%
+    );
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+.auth-showcase-lead {
+  max-width: 42ch;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(226, 224, 255, 0.72);
+}
+
+/* ---------- shipment tracker card ---------- */
+
+.track-card {
+  --node: 2.5rem;
+  /* the parcel rides above the track, so the rail needs headroom for it */
+  --rail-top: 2.9rem;
+  --rail-y: calc(var(--rail-top) + var(--node) / 2);
+
+  position: relative;
+  padding: 1.05rem 1.2rem 1.15rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.05)
+  );
+  box-shadow:
+    0 22px 48px rgba(8, 6, 30, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.track-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.track-id {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.track-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #86efac;
+}
+
+.track-rail {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding-top: var(--rail-top);
+}
+
+/* the track itself runs between the centres of the first and last stop */
+.track-line {
+  position: absolute;
+  left: 16.666%;
+  right: 16.666%;
+  top: var(--rail-y);
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+/*
+ * The resting width (and the parcel's resting `left`) match: with motion
+ * turned off the card still reads as a shipment part-way along its route,
+ * which is what the "In Transit" label above it claims.
+ */
+.track-line-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 64%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #818cf8, #67e8f9);
+  box-shadow: 0 0 12px rgba(103, 232, 249, 0.55);
+}
+
+/* a light sweeping along the track, so the panel never sits completely still */
+.track-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.9),
+    transparent
+  );
+  background-size: 38% 100%;
+  background-repeat: no-repeat;
+  background-position: -45% 0;
+}
+
+/*
+ * The parcel is positioned inside a wrapper that spans exactly the same width
+ * as the track, so animating `left` from 0% to 100% lands it dead on the first
+ * and last stop. A percentage translate would have resolved against the
+ * parcel's own width instead.
+ */
+.track-parcel-track {
+  position: absolute;
+  left: 16.666%;
+  right: 16.666%;
+  top: var(--rail-y);
+  height: 0;
+  z-index: 2;
+}
+
+.track-parcel {
+  position: absolute;
+  left: 64%;
+  top: -2.3rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0 0 0 -0.875rem;
+  border-radius: 0.55rem;
+  color: #40270a;
+  background: linear-gradient(140deg, #fcd34d, #f59e0b);
+  box-shadow: 0 6px 16px rgba(245, 158, 11, 0.45);
+}
+
+.track-parcel svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.track-stop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.track-node {
+  display: grid;
+  place-items: center;
+  width: var(--node);
+  height: var(--node);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.75);
+  background: #241f5e;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.track-node svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.track-stop-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.track-stop-sub {
+  font-size: 0.63rem;
+  color: rgba(226, 224, 255, 0.55);
+}
+
+.track-meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 1.05rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.track-meta small {
+  display: block;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: rgba(226, 224, 255, 0.5);
+}
+
+.track-meta strong {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.9rem;
+  font-weight: 620;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+/* ---------- feature list ---------- */
+
+.auth-showcase-features {
+  display: grid;
+  gap: 0.95rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.auth-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.auth-feature-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.65rem;
+  color: #a5b4fc;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.auth-feature-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.auth-feature-title {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.auth-feature-text {
+  display: block;
+  margin-top: 0.12rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: rgba(226, 224, 255, 0.66);
+}
+
+/* ---------- roles ---------- */
+
+.auth-showcase-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.auth-role-chip {
+  padding: 0.28rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 63.9375rem) {
+  .auth-showcase {
+    padding: 2.4rem 1.4rem 2.8rem;
+  }
+
+  .auth-showcase-title {
+    font-size: 1.75rem;
+    max-width: none;
+  }
+
+  .track-card {
+    --node: 2.2rem;
+  }
+
+  .track-stop-sub {
+    display: none;
+  }
+}
+
+/* ---------- motion ---------- */
+
+@keyframes auth-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4rem, 3rem, 0) scale(1.15);
+  }
+}
+
+@keyframes auth-drift-alt {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.1);
+  }
+  to {
+    transform: translate3d(-3.5rem, -2.5rem, 0) scale(1);
+  }
+}
+
+@keyframes auth-pan {
+  to {
+    background-position: 26px 26px;
+  }
+}
+
+@keyframes auth-ping {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.65);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 0.5rem rgba(74, 222, 128, 0);
+  }
+}
+
+@keyframes auth-shimmer {
+  to {
+    background-position: 220% 0;
+  }
+}
+
+@keyframes auth-sweep {
+  from {
+    background-position: -45% 0;
+  }
+  to {
+    background-position: 145% 0;
+  }
+}
+
+/* the parcel and the filled track share one 7s cycle, so they stay in step */
+@keyframes auth-travel {
+  0%,
+  7% {
+    left: 0%;
+  }
+  46%,
+  56% {
+    left: 50%;
+  }
+  95%,
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes auth-fill {
+  0%,
+  7% {
+    width: 0%;
+  }
+  46%,
+  56% {
+    width: 50%;
+  }
+  95%,
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes auth-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(4deg);
+  }
+}
+
+/* each stop lights up as the parcel reaches it - hence the offset delays */
+@keyframes auth-node-lit {
+  0%,
+  7% {
+    color: #fff;
+    border-color: rgba(103, 232, 249, 0.85);
+    box-shadow: 0 0 0 0 rgba(103, 232, 249, 0.45);
+  }
+  34%,
+  100% {
+    color: rgba(255, 255, 255, 0.75);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 0.85rem rgba(103, 232, 249, 0);
+  }
+}
+
+@keyframes auth-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .auth-showcase::before {
+    animation: auth-drift 26s ease-in-out infinite alternate;
+  }
+
+  .auth-showcase::after {
+    animation: auth-drift-alt 32s ease-in-out infinite alternate;
+  }
+
+  .auth-showcase-grid {
+    animation: auth-pan 6s linear infinite;
+  }
+
+  .auth-live-dot {
+    animation: auth-ping 2.2s ease-out infinite;
+  }
+
+  .auth-showcase-accent {
+    animation: auth-shimmer 7s linear infinite;
+  }
+
+  .track-line::after {
+    animation: auth-sweep 3.2s ease-in-out infinite;
+  }
+
+  .track-line-fill {
+    animation: auth-fill 7s ease-in-out infinite;
+  }
+
+  .track-parcel {
+    animation:
+      auth-travel 7s ease-in-out infinite,
+      auth-bob 1.9s ease-in-out infinite;
+  }
+
+  .track-stop .track-node {
+    animation: auth-node-lit 7s ease-out infinite;
+  }
+
+  /*
+   * Negative delays place each stop's flash at the moment the parcel arrives.
+   * The stops are children 3-5 of the rail: the track and the parcel wrapper
+   * are absolutely positioned, but they still count for :nth-child.
+   */
+  .track-stop:nth-child(3) .track-node {
+    animation-delay: 0s;
+  }
+  .track-stop:nth-child(4) .track-node {
+    animation-delay: -3.5s;
+  }
+  .track-stop:nth-child(5) .track-node {
+    animation-delay: -6.65s;
+  }
+
+  /*
+   * The stagger is carried on --rise-delay rather than on animation-delay
+   * directly. A per-item `animation-delay` would be a more specific
+   * declaration than the shorthand below it, and would flatten the two-part
+   * animation on .track-card down to a single delay - the float would then
+   * start during the entrance and cancel its transform.
+   */
+  .auth-rise {
+    animation: auth-rise 0.75s cubic-bezier(0.22, 0.7, 0.25, 1)
+      var(--rise-delay, 0s) both;
+  }
+
+  .auth-showcase-content > .auth-rise:nth-child(1) {
+    --rise-delay: 0.05s;
+  }
+  .auth-showcase-content > .auth-rise:nth-child(2) {
+    --rise-delay: 0.14s;
+  }
+  .auth-showcase-content > .auth-rise:nth-child(3) {
+    --rise-delay: 0.23s;
+  }
+  /* child 4 is the feature list, whose items stagger themselves below */
+  .auth-showcase-content > .auth-rise:nth-child(5) {
+    --rise-delay: 0.54s;
+  }
+
+  .auth-showcase-features .auth-rise:nth-child(1) {
+    --rise-delay: 0.3s;
+  }
+  .auth-showcase-features .auth-rise:nth-child(2) {
+    --rise-delay: 0.38s;
+  }
+  .auth-showcase-features .auth-rise:nth-child(3) {
+    --rise-delay: 0.46s;
+  }
+
+  /*
+   * The card rises in, then takes up a slow float. The float is listed second
+   * so it wins the transform once it starts, and its 1s delay keeps it clear
+   * of the entrance.
+   */
+  .track-card.auth-rise {
+    animation:
+      auth-rise 0.75s cubic-bezier(0.22, 0.7, 0.25, 1) var(--rise-delay, 0s)
+        both,
+      auth-float 9s ease-in-out 1s infinite;
+  }
+}
