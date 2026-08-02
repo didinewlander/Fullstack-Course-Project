@@ -1,0 +1,101 @@
+.manager-orders-tabs {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+  padding: var(--space-1);
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  width: fit-content;
+}
+
+.manager-orders-tabs button {
+  padding: 0.4rem 0.85rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.83rem;
+  color: var(--c-text-muted);
+}
+
+.manager-orders-tabs button.active {
+  background: var(--c-surface);
+  color: var(--c-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+
+.manager-orders-bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+  font-size: 0.85rem;
+}
+
+.manager-orders-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.manager-order-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4);
+}
+
+.manager-order-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.manager-order-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.manager-order-pickup {
+  font-size: 0.78rem;
+  color: var(--c-text-faint);
+  margin-top: 0.1rem;
+}
+
+.manager-order-items {
+  font-size: 0.86rem;
+  color: var(--c-text-muted);
+  margin: var(--space-2) 0;
+}
+
+.manager-order-total {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--c-primary);
+  margin-top: var(--space-2);
+}
+
+.manager-order-card details > summary {
+  cursor: pointer;
+  font-size: 0.84rem;
+  color: var(--c-primary);
+  padding: var(--space-2) 0;
+}
+
+.manager-order-card > .btn {
+  margin-top: var(--space-2);
+}

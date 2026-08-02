@@ -1,0 +1,457 @@
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--c-primary-soft), transparent),
+    var(--c-canvas);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 24rem;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-6);
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.auth-mark {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  background: var(--c-primary);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.auth-brand span:last-child {
+  font-weight: 650;
+  font-size: 0.95rem;
+}
+
+.auth-card h1 {
+  font-size: 1.35rem;
+  font-weight: 650;
+  margin-bottom: var(--space-1);
+}
+
+.auth-subtitle {
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+  margin-bottom: var(--space-5);
+}
+
+.auth-field {
+  margin-bottom: var(--space-4);
+}
+
+.auth-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--c-text-muted);
+  margin-bottom: var(--space-1);
+}
+
+.auth-field input,
+.auth-field select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.9rem;
+  background: var(--c-surface);
+  color: var(--c-text);
+}
+
+.auth-field input:focus,
+.auth-field select:focus {
+  outline: 2px solid var(--c-primary-soft);
+  border-color: var(--c-primary);
+}
+
+.auth-field input.error {
+  border-color: #e3a0a0;
+}
+
+.auth-error-text {
+  color: var(--c-danger);
+  font-size: 0.78rem;
+  margin-top: var(--space-1);
+}
+
+.auth-note {
+  font-size: 0.78rem;
+  color: var(--c-text-muted);
+  background: var(--c-surface-alt);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+  line-height: 1.45;
+}
+
+/* server-side failures, as opposed to per-field validation */
+.auth-error-banner {
+  background: var(--c-danger-soft);
+  border: 1px solid #f0c4c4;
+  color: var(--c-danger);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.83rem;
+  margin-bottom: var(--space-4);
+  line-height: 1.45;
+}
+
+.auth-submit {
+  width: 100%;
+  padding: 0.65rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--c-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 550;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.auth-submit:hover:not(:disabled) {
+  background: var(--c-primary-dark);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: var(--space-4);
+  font-size: 0.85rem;
+  color: var(--c-text-muted);
+}
+
+.auth-switch a {
+  color: var(--c-primary);
+  font-weight: 500;
+}
+
+/* =====================================================================
+ * Split landing layout
+ *
+ * Used by Login: the showcase panel on the left, the form on the right.
+ * Everything above this line is the older single-card layout that Register
+ * still uses, so the two sets of rules are kept apart - the form styles here
+ * are all scoped under .auth-panel and never leak into .auth-card.
+ * ===================================================================== */
+
+.auth-split {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--c-surface);
+}
+
+@media (min-width: 64rem) {
+  .auth-split {
+    /* the showcase gets the larger share; the form only needs ~26rem */
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  }
+
+  /*
+   * Placed explicitly rather than by source order: the form comes first in
+   * the DOM so it is the first thing reached on a phone and by a screen
+   * reader, but it belongs on the right of a wide screen.
+   */
+  .auth-split > .auth-showcase {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .auth-split > .auth-panel {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+
+.auth-panel {
+  display: grid;
+  place-items: center;
+  padding: clamp(1.75rem, 4vw, 3.5rem);
+  background: var(--c-surface);
+}
+
+.auth-panel-inner {
+  width: 100%;
+  max-width: 23rem;
+}
+
+/* the brand only needs repeating when the showcase is not beside the form */
+.auth-panel-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 2rem;
+  font-weight: 650;
+  font-size: 0.95rem;
+  color: var(--c-text);
+}
+
+@media (min-width: 64rem) {
+  .auth-panel-brand {
+    display: none;
+  }
+}
+
+.auth-panel h1 {
+  margin: 0 0 var(--space-2);
+  font-size: 1.55rem;
+  font-weight: 660;
+  letter-spacing: -0.022em;
+  color: var(--c-text);
+}
+
+.auth-panel .auth-subtitle {
+  margin-bottom: var(--space-6);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* ---------- fields ---------- */
+
+.auth-panel .auth-field {
+  margin-bottom: 1.05rem;
+}
+
+.auth-panel .auth-field label {
+  margin-bottom: 0.4rem;
+  font-weight: 550;
+  color: var(--c-text);
+}
+
+.auth-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-control-icon {
+  position: absolute;
+  left: 0.75rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--c-text-faint);
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.auth-control:focus-within .auth-control-icon {
+  color: var(--c-primary);
+}
+
+.auth-panel .auth-field input {
+  padding: 0.68rem 0.8rem 0.68rem 2.4rem;
+  border-radius: var(--radius);
+  background: var(--c-surface-alt);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.auth-panel .auth-field input::placeholder {
+  color: var(--c-text-faint);
+}
+
+/*
+ * The focus ring is a box-shadow rather than the global outline, so it can
+ * follow the input's rounded corners. It is at least as visible as the
+ * outline it replaces, which is what :focus-visible was there for.
+ */
+.auth-panel .auth-field input:focus {
+  outline: none;
+  background: var(--c-surface);
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
+}
+
+.auth-panel .auth-field input.error {
+  border-color: #e3a0a0;
+  background: var(--c-danger-soft);
+}
+
+.auth-panel .auth-field input.error:focus {
+  border-color: var(--c-danger);
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.14);
+}
+
+/* password inputs leave room on the right for the reveal button */
+.auth-panel .auth-field input.has-reveal {
+  padding-right: 2.6rem;
+}
+
+.auth-reveal {
+  position: absolute;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--c-text-faint);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.auth-reveal:hover {
+  color: var(--c-text);
+  background: var(--c-canvas);
+}
+
+.auth-reveal svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.auth-panel .auth-error-text {
+  margin-top: 0.35rem;
+}
+
+/* ---------- server error banner ---------- */
+
+.auth-panel .auth-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  border-radius: var(--radius);
+  padding: 0.65rem 0.8rem;
+}
+
+.auth-panel .auth-error-banner svg {
+  flex: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-top: 0.05rem;
+}
+
+/* ---------- submit ---------- */
+
+.auth-panel .auth-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: var(--space-2);
+  padding: 0.78rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #4f46e5, #6366f1 55%, #7c3aed);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.26);
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.auth-panel .auth-submit:hover:not(:disabled) {
+  filter: brightness(1.07);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.32);
+}
+
+.auth-panel .auth-submit:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.26);
+}
+
+.auth-submit svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  transition: transform 0.18s ease;
+}
+
+.auth-panel .auth-submit:hover:not(:disabled) svg {
+  transform: translateX(3px);
+}
+
+.auth-spinner {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+}
+
+/* ---------- footer ---------- */
+
+.auth-panel-footer {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--c-border);
+}
+
+.auth-panel-footer .auth-switch {
+  margin-top: 0;
+}
+
+.auth-panel-hint {
+  margin-top: var(--space-3);
+  text-align: center;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--c-text-faint);
+}
+
+/* ---------- motion ---------- */
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* named separately from the showcase's own reveal so neither file depends
+ * on a @keyframes block declared in the other */
+@keyframes auth-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .auth-spinner {
+    animation: auth-spin 0.7s linear infinite;
+  }
+
+  .auth-panel-inner {
+    animation: auth-panel-rise 0.7s cubic-bezier(0.22, 0.7, 0.25, 1) 0.08s both;
+  }
+}

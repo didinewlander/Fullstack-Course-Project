@@ -1,0 +1,47 @@
+.cost-breakdown {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.cost-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.cost-breakdown-table th,
+.cost-breakdown-table td {
+  text-align: left;
+  padding: 0.3rem 0.4rem;
+}
+
+.cost-breakdown-summary {
+  font-size: 0.9rem;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 0.5rem;
+}
+
+.cost-breakdown-summary > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.15rem 0.4rem;
+}
+
+.cost-breakdown-total {
+  font-weight: 700;
+  border-top: 1px solid #ddd;
+  margin-top: 0.35rem;
+  padding-top: 0.4rem !important;
+  color: #6a2cf5;
+}
+
+.cost-breakdown-note {
+  font-size: 0.8rem;
+  color: #777;
+  padding: 0.35rem 0.4rem 0;
+  margin: 0;
+  line-height: 1.4;
+}

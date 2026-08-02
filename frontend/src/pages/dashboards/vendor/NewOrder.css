@@ -1,0 +1,33 @@
+.new-order-sku {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--c-text-faint);
+}
+
+.new-order-quantity-input {
+  width: 5rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--c-border-strong);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.new-order-quantity-input:focus {
+  outline: 2px solid var(--c-primary-soft);
+  border-color: var(--c-primary);
+}
+
+.new-order-footer {
+  margin-top: var(--space-4);
+}
+
+.new-order-pickup {
+  max-width: 14rem;
+  margin-bottom: var(--space-4);
+}
+
+.new-order-preview {
+  margin-bottom: var(--space-4);
+}
