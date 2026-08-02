@@ -26,6 +26,7 @@ import ManagerUsers from "./pages/dashboards/manager/ManagerUsers";
 // to the caller, so one page serves all three
 import DeliveriesPage from "./pages/dashboards/shared/DeliveriesPage";
 import InvoicesPage from "./pages/dashboards/shared/InvoicesPage";
+import RoleGuide from "./pages/dashboards/shared/RoleGuide";
 
 import "./App.css";
 
@@ -66,6 +67,10 @@ function App() {
         path="/dashboard/vendor/invoices"
         element={guarded([VENDOR], <InvoicesPage />)}
       />
+      <Route
+        path="/dashboard/vendor/guide"
+        element={guarded([VENDOR], <RoleGuide />)}
+      />
 
       {/* ---------- supplier ---------- */}
       <Route
@@ -91,6 +96,10 @@ function App() {
       <Route
         path="/dashboard/supplier/invoices"
         element={guarded([SUPPLIER], <InvoicesPage />)}
+      />
+      <Route
+        path="/dashboard/supplier/guide"
+        element={guarded([SUPPLIER], <RoleGuide />)}
       />
 
       {/* ---------- logistics manager ---------- */}
@@ -121,6 +130,10 @@ function App() {
       <Route
         path="/dashboard/manager/users"
         element={guarded([LOGISTICS_MANAGER], <ManagerUsers />)}
+      />
+      <Route
+        path="/dashboard/manager/guide"
+        element={guarded([LOGISTICS_MANAGER], <RoleGuide />)}
       />
 
       {/* default route, just send people to the login page */}

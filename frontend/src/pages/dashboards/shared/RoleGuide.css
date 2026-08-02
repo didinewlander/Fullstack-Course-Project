@@ -1,0 +1,157 @@
+/* Styles for the shared "How this works" page (RoleGuide.jsx). */
+
+.guide-intro {
+  max-width: 68ch;
+  margin: 0 0 var(--space-5);
+  color: var(--c-text-muted);
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.guide-section {
+  margin-bottom: var(--space-6);
+}
+
+.guide-section h3 {
+  margin: 0 0 var(--space-2);
+  font-size: 1.05rem;
+}
+
+.guide-section-hint {
+  max-width: 68ch;
+  margin: 0 0 var(--space-3);
+  color: var(--c-text-muted);
+  font-size: 0.9rem;
+}
+
+/* --- step by step ------------------------------------------------------- */
+
+.guide-flow {
+  /* the number comes from .guide-step-number, not the list marker */
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.guide-step {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.guide-step-number {
+  flex: 0 0 auto;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--c-primary-soft);
+  color: var(--c-primary-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.guide-step-body {
+  min-width: 0;
+}
+
+.guide-step-body h4 {
+  margin: 0 0 var(--space-1);
+  font-size: 0.98rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.guide-step-body p {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--c-text-muted);
+  line-height: 1.6;
+}
+
+/* the badge that names the blocking role */
+.guide-waits {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: var(--c-warning-soft);
+  color: var(--c-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+/* --- what needs someone else -------------------------------------------- */
+
+.guide-handoffs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--c-surface);
+}
+
+.guide-handoffs li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.guide-handoffs li:last-child {
+  border-bottom: none;
+}
+
+.guide-handoff-action {
+  min-width: 0;
+}
+
+.guide-handoff-who {
+  min-width: 0;
+  color: var(--c-text-muted);
+  font-size: 0.9rem;
+}
+
+/* --- worth knowing ------------------------------------------------------ */
+
+.guide-gotchas {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: var(--space-2);
+  max-width: 76ch;
+}
+
+.guide-gotchas li {
+  color: var(--c-text-muted);
+  line-height: 1.6;
+}
+
+/*
+ * Stack the handoff rows on narrow screens - two columns of prose in ~180px
+ * each is unreadable.
+ */
+@media (max-width: 640px) {
+  .guide-handoffs li {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .guide-handoff-who::before {
+    content: "→ ";
+  }
+}

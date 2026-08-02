@@ -17,6 +17,7 @@ const NAV_BY_ROLE = {
       { to: "/dashboard/vendor/orders", label: "My Orders" },
       { to: "/dashboard/vendor/deliveries", label: "Deliveries" },
       { to: "/dashboard/vendor/invoices", label: "Invoices" },
+      { to: "/dashboard/vendor/guide", label: "How this works" },
     ],
   },
 
@@ -29,6 +30,7 @@ const NAV_BY_ROLE = {
       { to: "/dashboard/supplier/orders", label: "Incoming Orders" },
       { to: "/dashboard/supplier/deliveries", label: "Deliveries" },
       { to: "/dashboard/supplier/invoices", label: "Invoices" },
+      { to: "/dashboard/supplier/guide", label: "How this works" },
     ],
   },
 
@@ -42,6 +44,7 @@ const NAV_BY_ROLE = {
       { to: "/dashboard/manager/deliveries", label: "Deliveries" },
       { to: "/dashboard/manager/invoices", label: "Invoices" },
       { to: "/dashboard/manager/users", label: "Users" },
+      { to: "/dashboard/manager/guide", label: "How this works" },
     ],
   },
 };
