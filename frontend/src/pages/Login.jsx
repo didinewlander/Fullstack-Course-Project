@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { getDashboardPathByRole } from "../utils/roleRoutes";
+import { getDashboardPathByRole, hasDashboard } from "../utils/roleRoutes";
 import AuthShowcase from "../components/AuthShowcase";
 import "./Auth.css";
 
@@ -93,8 +93,12 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false);
 
   // already signed in (e.g. opened /login on a live session) -> go straight
-  // to the right dashboard instead of asking for credentials again
-  if (isBootstrapped && user) {
+  // to the right dashboard instead of asking for credentials again.
+  //
+  // hasDashboard guards the redirect: an unrecognised role resolves to
+  // "/login", and redirecting /login to /login is an infinite loop. Showing
+  // the form is the safe way out of that state.
+  if (isBootstrapped && user && hasDashboard(user.role)) {
     return <Navigate to={getDashboardPathByRole(user.role)} replace />;
   }
 

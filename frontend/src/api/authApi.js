@@ -60,6 +60,20 @@ export async function getCurrentUser() {
 export async function logout() {
   try {
     await client.post("/auth/logout");
+  } catch {
+    /*
+     * Deliberately swallowed. A `finally` alone still re-threw, which
+     * rejected the logoutUser thunk - and that thunk only handles
+     * `fulfilled`, so the user was never cleared from the store and the
+     * login page bounced them straight back into the dashboard. In other
+     * words a failed logout request meant you could not log out at all.
+     *
+     * This is not unlikely either: if the access token has already expired
+     * and the refresh fails, this very call is the one that 401s.
+     *
+     * There is nothing the user could do with the error anyway - the local
+     * session is gone either way, and the refresh token expires on its own.
+     */
   } finally {
     setAccessToken(null);
   }

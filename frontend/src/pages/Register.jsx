@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { getDashboardPathByRole } from "../utils/roleRoutes";
+import { getDashboardPathByRole, hasDashboard } from "../utils/roleRoutes";
 import "./Auth.css";
 
 // Field names and rules mirror POST /api/v1/auth/register exactly:
@@ -28,8 +28,10 @@ function Register() {
 
   const [errors, setErrors] = useState({});
 
-  // already signed in -> no reason to show the register form
-  if (isBootstrapped && user) {
+  // already signed in -> no reason to show the register form.
+  // hasDashboard guards against an unrecognised role, which would otherwise
+  // resolve to "/login" and bounce between the two pages forever.
+  if (isBootstrapped && user && hasDashboard(user.role)) {
     return <Navigate to={getDashboardPathByRole(user.role)} replace />;
   }
 

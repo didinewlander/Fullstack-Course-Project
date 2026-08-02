@@ -117,11 +117,18 @@ const authSlice = createSlice({
         });
     }
 
-    builder.addCase(logoutUser.fulfilled, (state) => {
-      state.user = null;
-      state.status = "idle";
-      state.error = null;
-    });
+    /*
+     * Both outcomes clear the session. authApi.logout no longer throws, but
+     * handling `rejected` too means a future change there cannot strand a
+     * user in a logged-in store with no way out.
+     */
+    for (const outcome of [logoutUser.fulfilled, logoutUser.rejected]) {
+      builder.addCase(outcome, (state) => {
+        state.user = null;
+        state.status = "idle";
+        state.error = null;
+      });
+    }
   },
 });
 

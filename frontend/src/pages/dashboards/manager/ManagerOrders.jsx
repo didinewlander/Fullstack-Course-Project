@@ -89,28 +89,38 @@ function ManagerOrders() {
   }
 
   /*
-   * Bulk approve runs sequentially in the thunk, because the approve route
-   * shares the order rate limiter (1 request / 10s / user) - firing them all
-   * at once would 429 everything after the first. Slow, but it reports exactly
-   * which ones did not make it.
+   * Bulk approve runs sequentially in the thunk and collects per-order
+   * failures rather than stopping at the first one, so a single rejected
+   * order still lets the rest through.
+   *
+   * The approve route has its own rate limit (30 / 10s / user) rather than
+   * sharing the strict order-submission one, which used to 429 every order
+   * after the first in a batch.
    */
   async function handleApproveSelected() {
     setIsWorking(true);
     setActionError(null);
 
-    const { failed } = await dispatch(approveOrders(selectedIds)).unwrap();
+    try {
+      const { failed } = await dispatch(approveOrders(selectedIds)).unwrap();
 
-    if (failed.length > 0) {
-      setActionError({
-        message:
-          `${failed.length} of ${selectedIds.length} could not be approved. ` +
-          `First reason: ${failed[0].error.message}`,
-      });
+      if (failed.length > 0) {
+        setActionError({
+          message:
+            `${failed.length} of ${selectedIds.length} could not be approved. ` +
+            `First reason: ${failed[0].error.message}`,
+        });
+      }
+
+      setSelectedIds([]);
+    } catch (caught) {
+      // the thunk itself failed, not an individual order
+      setActionError(caught);
+    } finally {
+      // in a finally so a throw cannot leave the buttons disabled for good
+      setIsWorking(false);
+      dispatch(fetchAllOrders());
     }
-
-    setSelectedIds([]);
-    setIsWorking(false);
-    dispatch(fetchAllOrders());
   }
 
   const renderOrderMeta = (order) => (

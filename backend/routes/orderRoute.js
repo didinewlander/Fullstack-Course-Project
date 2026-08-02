@@ -26,6 +26,10 @@ const AppError = require("../utils/AppError");
 
 const router = express.Router();
 
+/*
+ * Order creation is the path worth throttling hard: it prices the order and
+ * is the one a vendor could spam.
+ */
 const orderSubmissionLimiter = rateLimit({
   windowMs: 10 * 1000,
   limit: 1,
@@ -38,6 +42,35 @@ const orderSubmissionLimiter = rateLimit({
         "Please wait before submitting another order request",
         429,
         "ORDER_REQUEST_RATE_LIMITED",
+      ),
+    );
+  },
+});
+
+/*
+ * Approval needs its own budget, and a much larger one.
+ *
+ * The manager's bulk approve sends one request per selected order, back to
+ * back. This route used to share orderSubmissionLimiter (1 per 10s), so every
+ * order after the FIRST in a batch came back 429 - approving 5 orders approved
+ * exactly one. Running them sequentially did not help, because the limiter is
+ * time-windowed, not concurrency-based.
+ *
+ * Sharing it also meant a manager who created an order could not approve one
+ * for the next 10 seconds, since both routes drew from the same counter.
+ */
+const orderApprovalLimiter = rateLimit({
+  windowMs: 10 * 1000,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => req.auth.userId,
+  handler: (req, res, next) => {
+    next(
+      new AppError(
+        "Too many approvals at once, please wait a moment",
+        429,
+        "ORDER_APPROVAL_RATE_LIMITED",
       ),
     );
   },
@@ -89,7 +122,7 @@ router.post(
     USER_ROLES.SUPPLIER,
     USER_ROLES.LOGISTICS_MANAGER,
   ),
-  orderSubmissionLimiter,
+  orderApprovalLimiter,
   approveOrder,
 );
 

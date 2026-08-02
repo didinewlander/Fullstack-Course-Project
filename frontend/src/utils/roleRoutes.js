@@ -16,3 +16,16 @@ export function getDashboardPathByRole(role) {
   // fallback, just in case role is missing or unknown
   return DASHBOARD_PATH_BY_ROLE[role] ?? "/login";
 }
+
+/*
+ * Whether this role actually has a dashboard to be sent to.
+ *
+ * Needed because the fallback above is "/login", and /login redirects any
+ * logged-in user to getDashboardPathByRole(role) - so a user whose role does
+ * not map would be redirected from /login to /login forever. Callers that
+ * redirect AWAY from the login page check this first and render the form
+ * instead of bouncing.
+ */
+export function hasDashboard(role) {
+  return Boolean(DASHBOARD_PATH_BY_ROLE[role]);
+}
