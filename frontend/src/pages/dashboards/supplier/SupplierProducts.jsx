@@ -107,7 +107,7 @@ function SupplierProducts() {
           </label>
 
           <label>
-            Unit price
+            Unit price (USD)
             <input
               type="number"
               min="0"

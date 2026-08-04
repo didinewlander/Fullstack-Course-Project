@@ -4,7 +4,7 @@ import { GUIDE_BY_ROLE } from "../../../constants/roleGuides";
 import "./RoleGuide.css";
 
 /*
- * The "How this works" page, shared by all three roles.
+ * The "Tutorial" page, shared by all three roles.
  *
  * One component rather than three near-identical pages: the content differs,
  * the layout does not, and the routes are already role-gated in App.jsx. Same
@@ -24,7 +24,7 @@ function RoleGuide() {
    */
   if (!guide) {
     return (
-      <DashboardLayout heading="How this works">
+      <DashboardLayout heading="Tutorial">
         <p className="notice">
           There is no guide for this account type yet.
         </p>
