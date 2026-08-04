@@ -2,7 +2,7 @@ import { USER_ROLES } from "./roles";
 import { CANCELLATION_PENALTY_RATE } from "./orderStatus";
 
 /*
- * Content for the per-role "How this works" pages.
+ * Content for the per-role "Tutorial" pages.
  *
  * Kept as data rather than JSX so the three guides cannot drift apart in
  * layout, and so this file stays the single place to correct a rule if the
