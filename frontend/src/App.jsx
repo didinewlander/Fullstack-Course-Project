@@ -27,7 +27,7 @@ import ManagerUsers from "./pages/dashboards/manager/ManagerUsers";
 import DeliveriesPage from "./pages/dashboards/shared/DeliveriesPage";
 import InvoicesPage from "./pages/dashboards/shared/InvoicesPage";
 import RoleGuide from "./pages/dashboards/shared/RoleGuide";
-
+import NotFound from "./pages/NotFound";
 import "./App.css";
 
 const { VENDOR, SUPPLIER, LOGISTICS_MANAGER } = USER_ROLES;
@@ -138,7 +138,7 @@ function App() {
 
       {/* default route, just send people to the login page */}
       <Route path="/" element={<Navigate to="/login" replace />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
