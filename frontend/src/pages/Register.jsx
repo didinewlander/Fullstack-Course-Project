@@ -15,6 +15,10 @@ import "./Auth.css";
 const MIN_USERNAME_LENGTH = 3;
 const MIN_PASSWORD_LENGTH = 8;
 
+// matches the server rule in backend/services/auth.service.js so a format
+// error shows up here instead of round-tripping to the server first.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function Register() {
   const { register, user, isBootstrapped, isSubmitting, error } = useAuth();
   const navigate = useNavigate();
@@ -38,6 +42,9 @@ function Register() {
   function handleChange(event) {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+
+    // drop that field's stale error instead of leaving it until next submit
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
   }
 
   function validate() {
@@ -51,8 +58,8 @@ function Register() {
 
     if (!form.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!form.email.includes("@")) {
-      newErrors.email = "Email looks wrong, check the @";
+    } else if (!EMAIL_PATTERN.test(form.email.trim())) {
+      newErrors.email = "Enter a valid email, like you@company.com";
     }
 
     if (!form.password) {
@@ -146,7 +153,11 @@ function Register() {
           </p>
 
           {/* whatever the API said went wrong, e.g. EMAIL_ALREADY_EXISTS */}
-          {error && <p className="auth-error-banner">{error.message}</p>}
+          {error && (
+            <p className="auth-error-banner" role="alert">
+              {error.message}
+            </p>
+          )}
 
           <button type="submit" className="auth-submit" disabled={isSubmitting}>
             {isSubmitting ? "Creating account…" : "Register"}

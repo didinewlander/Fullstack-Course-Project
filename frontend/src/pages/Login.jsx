@@ -10,6 +10,10 @@ import "./Auth.css";
 // failed on the server with a confusing error.
 const MIN_PASSWORD_LENGTH = 8;
 
+// matches the server rule in backend/services/auth.service.js so a format
+// error shows up here instead of round-tripping to the server first.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // same inline-SVG approach as AuthShowcase - the project has no icon library
 const glyph = {
   viewBox: "0 0 24 24",
@@ -92,6 +96,9 @@ function Login() {
   // toggled by the eye button inside the password field
   const [showPassword, setShowPassword] = useState(false);
 
+  // only set for the edge case where login succeeds but the role is unknown
+  const [roleError, setRoleError] = useState(null);
+
   // already signed in (e.g. opened /login on a live session) -> go straight
   // to the right dashboard instead of asking for credentials again.
   //
@@ -106,6 +113,9 @@ function Login() {
   function handleChange(event) {
     const { name, value } = event.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+
+    // drop that field's stale error instead of leaving it until next submit
+    setErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
   }
 
   // basic validation, returns true if the form is ok
@@ -114,8 +124,8 @@ function Login() {
 
     if (!form.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!form.email.includes("@")) {
-      newErrors.email = "Email looks wrong, check the @";
+    } else if (!EMAIL_PATTERN.test(form.email.trim())) {
+      newErrors.email = "Enter a valid email, like you@company.com";
     }
 
     if (!form.password) {
@@ -137,11 +147,19 @@ function Login() {
       return; // stop here, do not submit, errors are already shown
     }
 
+    setRoleError(null);
+
     try {
       // real POST /api/v1/auth/login (issues #4, #5)
       const loggedInUser = await login(form);
 
-      // send the user straight to the dashboard that matches their role
+      // an unrecognised role would otherwise fall back to "/login", which is
+      // a silent no-op since we're already here
+      if (!hasDashboard(loggedInUser.role)) {
+        setRoleError("Your account role isn't set up for a dashboard yet. Contact a logistics manager.");
+        return;
+      }
+
       navigate(getDashboardPathByRole(loggedInUser.role));
     } catch {
       // the message from the server is already in `error` from the store,
@@ -230,10 +248,10 @@ function Login() {
             </div>
 
             {/* whatever the API said went wrong, e.g. INVALID_CREDENTIALS */}
-            {error && (
+            {(error || roleError) && (
               <p className="auth-error-banner" role="alert">
                 <AlertIcon />
-                <span>{error.message}</span>
+                <span>{error?.message ?? roleError}</span>
               </p>
             )}
 
