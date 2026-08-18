@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const helmet = require("helmet");
 
+dotenv.config();
 const initDB = require("./config/mongoDB");
 const cookieParser = require("cookie-parser");
 const userRouter = require("./routes/userRoute");
@@ -22,7 +23,6 @@ const errorHandler = require("./middleware/errorHandler");
 const requestLogger = require("./middleware/requestLogger");
 const AppError = require("./utils/AppError");
 
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

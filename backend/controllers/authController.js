@@ -8,10 +8,11 @@ const REFRESH_COOKIE_NAME = "refreshToken";
 
 const getRefreshCookieOptions = () => {
   const days = getRefreshTokenDays();
+  const isProduction = process.env.NODE_ENV === "production";
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
     path: "/api/v1/auth",
     maxAge: days * 24 * 60 * 60 * 1000,
   };
