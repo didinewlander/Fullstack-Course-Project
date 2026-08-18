@@ -101,15 +101,15 @@ function InvoicesPage() {
       await invoicesApi.generateInvoiceFile(invoice._id);
       await reload();
     });
+  // TODO: download is disabled for now because server file management error
+  // const download = (invoice) =>
+  //   action.run(invoice._id, async () => {
+  //     const url = await invoicesApi.downloadInvoiceFile(invoice._id);
 
-  const download = (invoice) =>
-    action.run(invoice._id, async () => {
-      const url = await invoicesApi.downloadInvoiceFile(invoice._id);
+  //     invoicesApi.saveBlobUrl(url, fileNameFor(invoice));
 
-      invoicesApi.saveBlobUrl(url, fileNameFor(invoice));
-
-      setTimeout(() => URL.revokeObjectURL(url), 30_000);
-    });
+  //     setTimeout(() => URL.revokeObjectURL(url), 30_000);
+  //   });
 
   return (
     <DashboardLayout heading="Invoices">
@@ -134,7 +134,9 @@ function InvoicesPage() {
             const canManage = isSupplier || isManager;
 
             // a vendor may only see the document once it is approved
-            const vendorNote = isVendor ? VENDOR_STATUS_NOTE[invoice.status] : null;
+            const vendorNote = isVendor
+              ? VENDOR_STATUS_NOTE[invoice.status]
+              : null;
             const canOpenPdf = canManage || isApproved;
 
             return (
@@ -147,7 +149,9 @@ function InvoicesPage() {
                     </strong>
                     <p className="faint">
                       Order{" "}
-                      {String(invoice.orderId?._id ?? invoice.orderId).slice(-6)}
+                      {String(invoice.orderId?._id ?? invoice.orderId).slice(
+                        -6,
+                      )}
                       {invoice.createdAt &&
                         ` · ${new Date(invoice.createdAt).toLocaleDateString()}`}
                     </p>
@@ -202,7 +206,7 @@ function InvoicesPage() {
                     </button>
                   )}
 
-                  {canOpenPdf && invoice.hasFile && (
+                  {/* {canOpenPdf && invoice.hasFile && (
                     <button
                       type="button"
                       className="btn btn-secondary btn-sm"
@@ -211,12 +215,14 @@ function InvoicesPage() {
                     >
                       Download
                     </button>
-                  )}
+                  )} */}
 
                   {/* a supplier may still upload their own official document */}
                   {isSupplier && isDraft && (
                     <label className="file-button">
-                      {invoice.hasFile ? "Replace with upload" : "Upload own PDF"}
+                      {invoice.hasFile
+                        ? "Replace with upload"
+                        : "Upload own PDF"}
                       <input
                         type="file"
                         accept="application/pdf"

@@ -37,7 +37,11 @@ const getUsers = asyncHandler(async (req, res) => {
 });
 
 const updateUser = asyncHandler(async (req, res) => {
-  const user = await userService.updateUser(req.params.userId, req.body);
+  const user = await userService.updateUser(
+    req.params.userId,
+    req.body,
+    req.auth.userId,
+  );
 
   res.status(200).json({
     success: true,
@@ -46,7 +50,7 @@ const updateUser = asyncHandler(async (req, res) => {
 });
 
 const deleteUser = asyncHandler(async (req, res) => {
-  await userService.deleteUser(req.params.userId);
+  await userService.deleteUser(req.params.userId, req.auth.userId);
 
   res.status(204).send();
 });

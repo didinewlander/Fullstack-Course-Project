@@ -16,6 +16,10 @@ import "../shared/SharedPages.css";
 // create the other two.
 const MIN_PASSWORD_LENGTH = 8;
 
+// matches the server rule in backend/utils/usersUtils.js so a format error
+// shows up here instead of round-tripping to the server first.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function ManagerUsers() {
   const { user: currentUser } = useAuth();
 
@@ -48,8 +52,8 @@ function ManagerUsers() {
       return;
     }
 
-    if (!form.email.includes("@")) {
-      setFormError({ message: "Enter a valid email address." });
+    if (!EMAIL_PATTERN.test(form.email.trim())) {
+      setFormError({ message: "Enter a valid email, like you@company.com" });
       return;
     }
 

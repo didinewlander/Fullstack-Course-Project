@@ -6,6 +6,7 @@ const {
   validatePassword,
   validateRole,
   validateUserId,
+  USER_ROLES,
 } = require("../utils/usersUtils");
 
 const bcrypt = require("bcryptjs");
@@ -160,6 +161,7 @@ const getUsers = async (
 const updateUser = async (
   /** @type {string} */ userId,
   /** @type {Partial<{ username: string; email: string; password: string; role: string; }>} */ userInput,
+  /** @type {string} */ actorId,
 ) => {
   validateUserId(userId);
 
@@ -208,7 +210,35 @@ const updateUser = async (
   }
 
   if (userInput.role !== undefined) {
-    updateData.role = validateRole(userInput.role);
+    const role = validateRole(userInput.role);
+
+    // changing your own role could revoke the access you're using right now
+    if (actorId && userId === actorId) {
+      throw new AppError(
+        "You cannot change your own role",
+        403,
+        "CANNOT_MODIFY_OWN_ROLE",
+      );
+    }
+
+    if (
+      currentUser.role === USER_ROLES.LOGISTICS_MANAGER &&
+      role !== USER_ROLES.LOGISTICS_MANAGER
+    ) {
+      const managerCount = await userDal.countUsers({
+        role: USER_ROLES.LOGISTICS_MANAGER,
+      });
+
+      if (managerCount <= 1) {
+        throw new AppError(
+          "Cannot remove the last logistics manager",
+          409,
+          "LAST_MANAGER_REQUIRED",
+        );
+      }
+    }
+
+    updateData.role = role;
   }
 
   if (userInput.password !== undefined) {
@@ -236,8 +266,39 @@ const updateUser = async (
   return updatedUser;
 };
 
-const deleteUser = async (/** @type {string} */ userId) => {
+const deleteUser = async (
+  /** @type {string} */ userId,
+  /** @type {string} */ actorId,
+) => {
   validateUserId(userId);
+
+  if (actorId && userId === actorId) {
+    throw new AppError(
+      "You cannot delete your own account",
+      403,
+      "CANNOT_DELETE_SELF",
+    );
+  }
+
+  const targetUser = await userDal.findUserById(userId);
+
+  if (!targetUser) {
+    throw new AppError("User not found", 404, "USER_NOT_FOUND");
+  }
+
+  if (targetUser.role === USER_ROLES.LOGISTICS_MANAGER) {
+    const managerCount = await userDal.countUsers({
+      role: USER_ROLES.LOGISTICS_MANAGER,
+    });
+
+    if (managerCount <= 1) {
+      throw new AppError(
+        "Cannot delete the last logistics manager",
+        409,
+        "LAST_MANAGER_REQUIRED",
+      );
+    }
+  }
 
   const deletedUser = await userDal.deleteUserById(userId);
 

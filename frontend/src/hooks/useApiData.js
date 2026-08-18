@@ -96,7 +96,16 @@ export function useApiAction() {
   const [pendingId, setPendingId] = useState(null);
   const [error, setError] = useState(null);
 
+  // tracked outside state so a second run() for the same id, fired before
+  // the re-render from setPendingId lands, is still seen as a duplicate
+  const pendingIdRef = useRef(null);
+
   const run = useCallback(async (id, action) => {
+    if (pendingIdRef.current === id) {
+      return false; // an action for this id is already in flight
+    }
+
+    pendingIdRef.current = id;
     setPendingId(id);
     setError(null);
 
@@ -107,6 +116,7 @@ export function useApiAction() {
       setError(caughtError);
       return false;
     } finally {
+      pendingIdRef.current = null;
       setPendingId(null);
     }
   }, []);
